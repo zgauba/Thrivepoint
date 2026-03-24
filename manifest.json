@@ -1,8 +1,8 @@
 {
-  "name": "Earn & Enjoy: Summer Challenge",
-  "short_name": "Earn & Enjoy",
-  "description": "A family task and reward tracking app for kids",
-  "start_url": "/EarnAndEnjoy/",
+  "name": "Thrivepoint: Family Challenge",
+  "short_name": "Thrivepoint",
+  "description": "A family task and reward tracking app — earn points, build habits, unlock rewards.",
+  "start_url": "/Thrivepoint/",
   "display": "standalone",
   "background_color": "#0f0f1a",
   "theme_color": "#1a1a2e",

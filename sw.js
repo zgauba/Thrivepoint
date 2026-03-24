@@ -1,4 +1,4 @@
-const CACHE = 'earn-enjoy-v1';
+const CACHE = 'thrivepoint-v1';
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', e => {

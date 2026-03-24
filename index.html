@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Earn & Enjoy" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <title>Earn &amp; Enjoy</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0f0f1a;
+      --surface:    #1a1a2e;
+      --surface2:   #22223b;
+      --border:     #2e2e4a;
+      --accent:     #7c3aed;
+      --accent2:    #a855f7;
+      --gold:       #f59e0b;
+      --green:      #10b981;
+      --red:        #ef4444;
+      --text:       #f1f5f9;
+      --text-muted: #94a3b8;
+      --radius:     16px;
+      --radius-sm:  10px;
+      --safe-top:   env(safe-area-inset-top, 0px);
+      --safe-bot:   env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+
+    /* ─── App Shell ─────────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ─── Views ─────────────────────────────────────────────── */
+    .view { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .view.active { display: flex; }
+
+    /* ─── PIN Screen ────────────────────────────────────────── */
+    #view-pin {
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      padding: 40px 24px;
+      padding-top: calc(var(--safe-top) + 40px);
+    }
+
+    .pin-logo {
+      font-size: 56px;
+      line-height: 1;
+    }
+
+    .pin-title {
+      font-size: 26px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .pin-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .pin-dots {
+      display: flex;
+      gap: 16px;
+    }
+
+    .pin-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .pin-dot.filled {
+      background: var(--accent2);
+      border-color: var(--accent2);
+    }
+
+    .pin-keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      width: 100%;
+      max-width: 280px;
+    }
+
+    .pin-key {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 22px;
+      font-weight: 600;
+      height: 68px;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .pin-key:active { background: var(--accent); transform: scale(0.95); }
+    .pin-key.del { font-size: 18px; }
+    .pin-key.empty { visibility: hidden; }
+
+    .pin-error {
+      color: var(--red);
+      font-size: 13px;
+      min-height: 18px;
+      text-align: center;
+    }
+
+    /* ─── Profile Select ────────────────────────────────────── */
+    #view-profiles {
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 40px 24px;
+      padding-top: calc(var(--safe-top) + 40px);
+    }
+
+    .profiles-title {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .profiles-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .profiles-grid {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .profile-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.15s, transform 0.15s, background 0.15s;
+      min-width: 130px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .profile-card:active { transform: scale(0.95); }
+    .profile-card:hover { border-color: var(--accent2); background: var(--surface2); }
+
+    .profile-avatar {
+      font-size: 52px;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
+    .profile-name {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .profile-points {
+      font-size: 13px;
+      color: var(--gold);
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .parent-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 10px 24px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .parent-btn:hover { color: var(--text); border-color: var(--accent2); }
+
+    /* ─── Kid Dashboard ─────────────────────────────────────── */
+    #view-kid {
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .kid-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      padding-top: calc(var(--safe-top) + 16px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .kid-header-avatar { font-size: 32px; }
+
+    .kid-header-info { flex: 1; }
+
+    .kid-header-name {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .kid-header-date {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .kid-header-points {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 20px;
+      padding: 6px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .kid-header-points-num {
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+      color: #fff;
+    }
+
+    .kid-header-points-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.75);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── Tab Bar ───────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 12px 8px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+
+    /* ─── Scrollable Content ────────────────────────────────── */
+    .scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px;
+      padding-bottom: calc(var(--safe-bot) + 16px);
+    }
+
+    /* ─── Tab Panels ────────────────────────────────────────── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ─── Progress Bar ──────────────────────────────────────── */
+    .progress-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+
+    .progress-banner-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .progress-label { font-size: 13px; color: var(--text-muted); }
+    .progress-count { font-size: 13px; font-weight: 700; color: var(--gold); }
+
+    .progress-track {
+      background: var(--border);
+      border-radius: 99px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.4s ease;
+    }
+
+    /* ─── Category Section ──────────────────────────────────── */
+    .category-section { margin-bottom: 20px; }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .category-icon { font-size: 18px; }
+
+    .category-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .category-badge {
+      margin-left: auto;
+      background: var(--surface2);
+      border-radius: 99px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .category-badge.complete {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--green);
+    }
+
+    /* ─── Task Card ─────────────────────────────────────────── */
+    .task-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .task-card:active { transform: scale(0.98); }
+
+    .task-card.done {
+      background: rgba(16, 185, 129, 0.06);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .task-card.skipped {
+      opacity: 0.45;
+    }
+
+    .task-check {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s, border-color 0.15s;
+      font-size: 14px;
+    }
+
+    .task-card.done .task-check {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .task-card.done .task-check::after { content: '✓'; color: #fff; font-weight: 700; }
+
+    .task-info { flex: 1; }
+
+    .task-title {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .task-card.done .task-title {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .task-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .task-points {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .task-card.done .task-points { color: var(--text-muted); }
+
+    /* ─── Rewards Tab ───────────────────────────────────────── */
+    .rewards-header {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .rewards-balance-label {
+      font-size: 13px;
+      color: rgba(255,255,255,0.75);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .rewards-balance-num {
+      font-size: 48px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.1;
+    }
+
+    .rewards-balance-unit {
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+    }
+
+    .rewards-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .reward-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .reward-card:active { transform: scale(0.98); }
+    .reward-card.affordable { border-color: rgba(124, 58, 237, 0.4); }
+    .reward-card.affordable:hover { border-color: var(--accent2); background: var(--surface2); }
+    .reward-card.locked { opacity: 0.5; cursor: not-allowed; }
+
+    .reward-icon { font-size: 30px; flex-shrink: 0; }
+
+    .reward-info { flex: 1; }
+
+    .reward-title { font-size: 15px; font-weight: 600; }
+
+    .reward-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .reward-cost {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .reward-cost-num {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    .reward-cost-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* ─── Ledger Tab ────────────────────────────────────────── */
+    .ledger-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ledger-icon { font-size: 22px; flex-shrink: 0; }
+
+    .ledger-info { flex: 1; }
+
+    .ledger-title { font-size: 14px; font-weight: 600; }
+
+    .ledger-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .ledger-delta {
+      font-size: 16px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .ledger-delta.earn { color: var(--green); }
+    .ledger-delta.spend { color: var(--red); }
+
+    /* ─── Parent Dashboard ──────────────────────────────────── */
+    #view-parent {
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .parent-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      padding-top: calc(var(--safe-top) + 16px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .parent-header-title {
+      font-size: 18px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--accent2);
+      font-size: 15px;
+      cursor: pointer;
+      padding: 4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .parent-kid-tabs {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .parent-kid-tab {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .parent-kid-tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+
+    .parent-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .parent-stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .parent-stat-num {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent2);
+    }
+
+    .parent-stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .parent-week-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .week-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .week-row-day { font-size: 14px; font-weight: 600; }
+
+    .week-row-tasks { font-size: 12px; color: var(--text-muted); }
+
+    .week-row-pts {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    /* ─── Toast ─────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: calc(var(--safe-bot) + 24px);
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ─── Modal ─────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-sheet {
+      background: var(--surface);
+      border-radius: 24px 24px 0 0;
+      padding: 24px;
+      padding-bottom: calc(var(--safe-bot) + 24px);
+      width: 100%;
+      max-width: 480px;
+      animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-handle {
+      width: 40px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      margin: 0 auto 20px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .modal-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .modal-cost-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 99px;
+      padding: 6px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+
+    .modal-actions { display: flex; gap: 12px; }
+
+    .btn {
+      flex: 1;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      font-weight: 700;
+      padding: 14px;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+    .btn-secondary { background: var(--surface2); color: var(--text-muted); }
+
+    /* ─── Confetti ──────────────────────────────────────────── */
+    .confetti-piece {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      pointer-events: none;
+      z-index: 9999;
+      animation: confettiFall 1.2s ease-in forwards;
+    }
+
+    @keyframes confettiFall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── PIN Screen ──────────────────────────────────────────── -->
+  <div id="view-pin" class="view active">
+    <div class="pin-logo">🌟</div>
+    <div>
+      <div class="pin-title">Earn &amp; Enjoy</div>
+      <div class="pin-subtitle">Summer Challenge</div>
+    </div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="pin-keypad">
+      <button class="pin-key" data-key="1">1</button>
+      <button class="pin-key" data-key="2">2</button>
+      <button class="pin-key" data-key="3">3</button>
+      <button class="pin-key" data-key="4">4</button>
+      <button class="pin-key" data-key="5">5</button>
+      <button class="pin-key" data-key="6">6</button>
+      <button class="pin-key" data-key="7">7</button>
+      <button class="pin-key" data-key="8">8</button>
+      <button class="pin-key" data-key="9">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" data-key="0">0</button>
+      <button class="pin-key del" data-key="del">⌫</button>
+    </div>
+  </div>
+
+  <!-- ── Profile Select ─────────────────────────────────────── -->
+  <div id="view-profiles" class="view">
+    <div class="profiles-title">Who's checking in? 👋</div>
+    <div class="profiles-subtitle">Tap your name to see your tasks</div>
+    <div class="profiles-grid" id="profiles-grid"></div>
+    <button class="parent-btn" id="btn-parent-mode">🔐 Parent View</button>
+  </div>
+
+  <!-- ── Kid Dashboard ──────────────────────────────────────── -->
+  <div id="view-kid" class="view">
+    <div class="kid-header">
+      <button class="back-btn" id="kid-back">← Back</button>
+      <div class="kid-header-avatar" id="kid-header-avatar"></div>
+      <div class="kid-header-info">
+        <div class="kid-header-name" id="kid-header-name"></div>
+        <div class="kid-header-date" id="kid-header-date"></div>
+      </div>
+      <div class="kid-header-points">
+        <div class="kid-header-points-num" id="kid-header-pts">0</div>
+        <div class="kid-header-points-label">pts</div>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="tasks">✅ Tasks</button>
+      <button class="tab-btn" data-tab="rewards">🎁 Rewards</button>
+      <button class="tab-btn" data-tab="ledger">📊 History</button>
+    </div>
+    <div class="scroll-area">
+
+      <!-- Tasks Panel -->
+      <div class="tab-panel active" id="panel-tasks">
+        <div class="progress-banner">
+          <div class="progress-banner-top">
+            <span class="progress-label">Today's Progress</span>
+            <span class="progress-count" id="progress-count">0 / 0</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+        <div id="tasks-list"></div>
+      </div>
+
+      <!-- Rewards Panel -->
+      <div class="tab-panel" id="panel-rewards">
+        <div class="rewards-header">
+          <div class="rewards-balance-label">Your Balance</div>
+          <div class="rewards-balance-num" id="rewards-balance">0</div>
+          <div class="rewards-balance-unit">points</div>
+        </div>
+        <div class="rewards-section-title">Available Rewards</div>
+        <div id="rewards-list"></div>
+      </div>
+
+      <!-- Ledger Panel -->
+      <div class="tab-panel" id="panel-ledger">
+        <div id="ledger-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Parent Dashboard ───────────────────────────────────── -->
+  <div id="view-parent" class="view">
+    <div class="parent-header">
+      <button class="back-btn" id="parent-back">← Back</button>
+      <div class="parent-header-title">🔐 Parent View</div>
+    </div>
+    <div class="parent-kid-tabs" id="parent-kid-tabs"></div>
+    <div class="scroll-area">
+      <div id="parent-content"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Reward Redeem Modal ─────────────────────────────────── -->
+<div class="modal-overlay" id="reward-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-reward-title"></div>
+    <div class="modal-desc" id="modal-reward-desc"></div>
+    <div class="modal-cost-badge">⭐ <span id="modal-reward-cost"></span> points</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-confirm">Redeem!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ──────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+// ─── App Data (localStorage-backed, Cloudflare-ready) ────────────────────────
+
+const DEFAULT_CONFIG = {
+  pin: "1234",
+  kids: [
+    { id: "k1", name: "Noor",  avatar: "👧", color: "#a855f7" },
+    { id: "k2", name: "Shaan", avatar: "👦", color: "#3b82f6" }
+  ],
+  categories: [
+    { id: "c1", name: "Daily Core Habits", icon: "🛏️" },
+    { id: "c2", name: "Daily Knowledge",   icon: "📚" },
+    { id: "c3", name: "Creative",          icon: "🎨" },
+    { id: "c4", name: "By Parent Request", icon: "📋" },
+    { id: "c5", name: "Islam",             icon: "🕌" }
+  ],
+  tasks: [
+    // Daily Core Habits
+    { id: "t01", catId: "c1", title: "Make Your Bed",            points: 2, days: [1,2,3,4,5,6,0] },
+    { id: "t02", catId: "c1", title: "Help Empty the Dishwasher",points: 2, days: [1,2,3,4,5,6,0] },
+    { id: "t03", catId: "c1", title: "Go Outside (30 mins)",     points: 2, days: [1,2,3,4,5,6,0] },
+    // Daily Knowledge
+    { id: "t04", catId: "c2", title: "Read (30 mins)",           points: 3, days: [1,2,3,4,5,6,0] },
+    { id: "t05", catId: "c2", title: "Wood Math (1 page)",       points: 3, days: [1,2,3,4,5,6,0] },
+    { id: "t06", catId: "c2", title: "Qur'an with Nani (30 mins)",points:3, days: [1,2,3,4,5,6,0] },
+    // Creative
+    { id: "t07", catId: "c3", title: "Practice Piano (15 mins)", points: 2, days: [1,2,3,4,5] },
+    { id: "t08", catId: "c3", title: "Noteworks App (15 mins)",  points: 2, days: [2,4] },
+    // By Parent Request
+    { id: "t09", catId: "c4", title: "Tidy the Basement",        points: 3, days: [1,2,3,4,5,6,0] },
+    { id: "t10", catId: "c4", title: "Take a Bath",              points: 3, days: [1,3,5] },
+    // Islam
+    { id: "t11", catId: "c5", title: "Jum'ah (Friday) Prayer",   points: 5, days: [5] },
+    { id: "t12", catId: "c5", title: "Fajr (Dawn) — 2 Rak'ahs",  points: 2, days: [1,2,3,4,5,6,0] },
+    { id: "t13", catId: "c5", title: "Dhuhr (Midday) — 4 Rak'ahs",points:2, days: [1,2,3,4,5,6,0] },
+    { id: "t14", catId: "c5", title: "Asr (Afternoon) — 4 Rak'ahs",points:2,days: [1,2,3,4,5,6,0] },
+    { id: "t15", catId: "c5", title: "Maghrib (Sunset) — 3 Rak'ahs",points:2,days:[1,2,3,4,5,6,0] },
+    { id: "t16", catId: "c5", title: "Isha (Night) — 4 Rak'ahs", points: 2, days: [1,2,3,4,5,6,0] }
+  ],
+  rewards: [
+    { id: "r1", icon: "📱", title: "+1 Hr iPad Time",       desc: "Earn extra screen time today!", cost: 10, type: "daily" },
+    { id: "r2", icon: "⏭️", title: "Skip a Task Tomorrow",  desc: "Skip one task tomorrow (not the same one twice in a row).", cost: 15, type: "daily" },
+    { id: "r3", icon: "💵", title: "$5 In-App Purchase",    desc: "A $5 in-app purchase of your choice.", cost: 95, type: "weekly" },
+    { id: "r4", icon: "🎬", title: "Movie Theater",         desc: "A trip to the movies!", cost: 120, type: "weekly" },
+    { id: "r5", icon: "🔐", title: "Escape Room",           desc: "An escape room adventure!", cost: 150, type: "weekly" },
+    { id: "r6", icon: "💡", title: "Your Suggestion",       desc: "Suggest a reward to Mom & Dad.", cost: 100, type: "weekly" }
+  ]
+};
+
+// ─── Storage Helpers ──────────────────────────────────────────────────────────
+
+function loadConfig() {
+  const raw = localStorage.getItem('ee_config');
+  return raw ? JSON.parse(raw) : DEFAULT_CONFIG;
+}
+
+function saveConfig(cfg) {
+  localStorage.setItem('ee_config', JSON.stringify(cfg));
+}
+
+function todayKey() {
+  const d = new Date();
+  return `ee_day_${d.getFullYear()}_${d.getMonth()+1}_${d.getDate()}`;
+}
+
+function loadCompletions() {
+  const raw = localStorage.getItem(todayKey());
+  return raw ? JSON.parse(raw) : {};
+}
+
+function saveCompletions(data) {
+  localStorage.setItem(todayKey(), JSON.stringify(data));
+}
+
+function loadLedger(kidId) {
+  const raw = localStorage.getItem(`ee_ledger_${kidId}`);
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveLedger(kidId, ledger) {
+  localStorage.setItem(`ee_ledger_${kidId}`, JSON.stringify(ledger));
+}
+
+function getBalance(kidId) {
+  const ledger = loadLedger(kidId);
+  return ledger.reduce((sum, e) => sum + e.delta, 0);
+}
+
+function addLedgerEntry(kidId, entry) {
+  const ledger = loadLedger(kidId);
+  ledger.unshift(entry);
+  saveLedger(kidId, ledger.slice(0, 200)); // keep last 200 entries
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+
+let cfg = loadConfig();
+let activeKidId = null;
+let activeParentKidId = null;
+let pendingReward = null;
+let pinBuffer = '';
+const CORRECT_PIN = cfg.pin;
+
+// ─── Routing ──────────────────────────────────────────────────────────────────
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(`view-${id}`).classList.add('active');
+}
+
+// ─── PIN Screen ───────────────────────────────────────────────────────────────
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById(`dot-${i}`).classList.toggle('filled', i < pinBuffer.length);
+  }
+}
+
+function handlePinKey(key) {
+  if (key === 'del') {
+    pinBuffer = pinBuffer.slice(0, -1);
+    updatePinDots();
+    document.getElementById('pin-error').textContent = '';
+    return;
+  }
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += key;
+  updatePinDots();
+  if (pinBuffer.length === 4) {
+    if (pinBuffer === CORRECT_PIN) {
+      pinBuffer = '';
+      updatePinDots();
+      renderProfiles();
+      showView('profiles');
+    } else {
+      document.getElementById('pin-error').textContent = 'Incorrect PIN. Try again.';
+      pinBuffer = '';
+      updatePinDots();
+    }
+  }
+}
+
+document.querySelectorAll('.pin-key').forEach(btn => {
+  btn.addEventListener('click', () => handlePinKey(btn.dataset.key));
+});
+
+// ─── Profile Select ───────────────────────────────────────────────────────────
+
+function renderProfiles() {
+  cfg = loadConfig();
+  const grid = document.getElementById('profiles-grid');
+  grid.innerHTML = '';
+  cfg.kids.forEach(kid => {
+    const bal = getBalance(kid.id);
+    const card = document.createElement('div');
+    card.className = 'profile-card';
+    card.innerHTML = `
+      <div class="profile-avatar">${kid.avatar}</div>
+      <div class="profile-name">${kid.name}</div>
+      <div class="profile-points">⭐ ${bal} pts</div>
+    `;
+    card.addEventListener('click', () => openKidDashboard(kid.id));
+    grid.appendChild(card);
+  });
+}
+
+document.getElementById('btn-parent-mode').addEventListener('click', () => {
+  openParentDashboard();
+});
+
+// ─── Kid Dashboard ────────────────────────────────────────────────────────────
+
+function openKidDashboard(kidId) {
+  activeKidId = kidId;
+  const kid = cfg.kids.find(k => k.id === kidId);
+  const today = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  document.getElementById('kid-header-avatar').textContent = kid.avatar;
+  document.getElementById('kid-header-name').textContent = kid.name;
+  document.getElementById('kid-header-date').textContent =
+    `${days[today.getDay()]}, ${months[today.getMonth()]} ${today.getDate()}`;
+
+  // Reset tabs
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="tasks"]').classList.add('active');
+  document.getElementById('panel-tasks').classList.add('active');
+
+  renderTasks();
+  renderRewards();
+  renderLedger();
+  showView('kid');
+}
+
+document.getElementById('kid-back').addEventListener('click', () => {
+  renderProfiles();
+  showView('profiles');
+});
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
+    if (btn.dataset.tab === 'rewards') renderRewards();
+    if (btn.dataset.tab === 'ledger') renderLedger();
+  });
+});
+
+function getTodayTasks() {
+  const dow = new Date().getDay();
+  return cfg.tasks.filter(t => t.days.includes(dow));
+}
+
+function renderTasks() {
+  const completions = loadCompletions();
+  const kidCompletions = completions[activeKidId] || {};
+  const todayTasks = getTodayTasks();
+  const balance = getBalance(activeKidId);
+
+  document.getElementById('kid-header-pts').textContent = balance;
+
+  // Progress
+  const done = todayTasks.filter(t => kidCompletions[t.id] === 'done').length;
+  const total = todayTasks.length;
+  document.getElementById('progress-count').textContent = `${done} / ${total}`;
+  document.getElementById('progress-fill').style.width = total ? `${(done/total)*100}%` : '0%';
+
+  // Group by category
+  const list = document.getElementById('tasks-list');
+  list.innerHTML = '';
+
+  cfg.categories.forEach(cat => {
+    const catTasks = todayTasks.filter(t => t.catId === cat.id);
+    if (!catTasks.length) return;
+
+    const catDone = catTasks.filter(t => kidCompletions[t.id] === 'done').length;
+    const allDone = catDone === catTasks.length;
+
+    const section = document.createElement('div');
+    section.className = 'category-section';
+    section.innerHTML = `
+      <div class="category-header">
+        <span class="category-icon">${cat.icon}</span>
+        <span class="category-name">${cat.name}</span>
+        <span class="category-badge ${allDone ? 'complete' : ''}">${catDone}/${catTasks.length}</span>
+      </div>
+    `;
+
+    catTasks.forEach(task => {
+      const status = kidCompletions[task.id] || 'pending';
+      const card = document.createElement('div');
+      card.className = `task-card ${status === 'done' ? 'done' : ''}`;
+      card.innerHTML = `
+        <div class="task-check"></div>
+        <div class="task-info">
+          <div class="task-title">${task.title}</div>
+        </div>
+        <div class="task-points">+${task.points}</div>
+      `;
+      card.addEventListener('click', () => toggleTask(task));
+      section.appendChild(card);
+    });
+
+    list.appendChild(section);
+  });
+}
+
+function toggleTask(task) {
+  const completions = loadCompletions();
+  if (!completions[activeKidId]) completions[activeKidId] = {};
+  const current = completions[activeKidId][task.id];
+
+  if (current === 'done') {
+    // Undo
+    completions[activeKidId][task.id] = 'pending';
+    saveCompletions(completions);
+    addLedgerEntry(activeKidId, {
+      id: `l${Date.now()}`,
+      type: 'undo',
+      taskId: task.id,
+      title: task.title,
+      delta: -task.points,
+      ts: new Date().toISOString()
+    });
+    showToast(`↩️ Undid "${task.title}"`);
+  } else {
+    // Complete
+    completions[activeKidId][task.id] = 'done';
+    saveCompletions(completions);
+    addLedgerEntry(activeKidId, {
+      id: `l${Date.now()}`,
+      type: 'earn',
+      taskId: task.id,
+      title: task.title,
+      delta: task.points,
+      ts: new Date().toISOString()
+    });
+    showToast(`⭐ +${task.points} pts — ${task.title}`);
+    spawnConfetti();
+  }
+
+  renderTasks();
+}
+
+// ─── Rewards ──────────────────────────────────────────────────────────────────
+
+function renderRewards() {
+  const balance = getBalance(activeKidId);
+  document.getElementById('rewards-balance').textContent = balance;
+
+  const list = document.getElementById('rewards-list');
+  list.innerHTML = '';
+
+  cfg.rewards.forEach(reward => {
+    const canAfford = balance >= reward.cost;
+    const card = document.createElement('div');
+    card.className = `reward-card ${canAfford ? 'affordable' : 'locked'}`;
+    card.innerHTML = `
+      <div class="reward-icon">${reward.icon}</div>
+      <div class="reward-info">
+        <div class="reward-title">${reward.title}</div>
+        <div class="reward-desc">${reward.desc}</div>
+      </div>
+      <div class="reward-cost">
+        <div class="reward-cost-num">${reward.cost}</div>
+        <div class="reward-cost-label">pts</div>
+      </div>
+    `;
+    if (canAfford) {
+      card.addEventListener('click', () => openRewardModal(reward));
+    }
+    list.appendChild(card);
+  });
+}
+
+function openRewardModal(reward) {
+  pendingReward = reward;
+  document.getElementById('modal-reward-title').textContent = `${reward.icon} ${reward.title}`;
+  document.getElementById('modal-reward-desc').textContent = reward.desc;
+  document.getElementById('modal-reward-cost').textContent = reward.cost;
+  document.getElementById('reward-modal').classList.add('open');
+}
+
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  document.getElementById('reward-modal').classList.remove('open');
+  pendingReward = null;
+});
+
+document.getElementById('modal-confirm').addEventListener('click', () => {
+  if (!pendingReward) return;
+  const balance = getBalance(activeKidId);
+  if (balance < pendingReward.cost) {
+    showToast('❌ Not enough points!');
+    document.getElementById('reward-modal').classList.remove('open');
+    return;
+  }
+  addLedgerEntry(activeKidId, {
+    id: `l${Date.now()}`,
+    type: 'spend',
+    rewardId: pendingReward.id,
+    title: pendingReward.title,
+    delta: -pendingReward.cost,
+    ts: new Date().toISOString()
+  });
+  document.getElementById('reward-modal').classList.remove('open');
+  showToast(`🎉 Redeemed: ${pendingReward.title}!`);
+  spawnConfetti();
+  spawnConfetti();
+  renderRewards();
+  document.getElementById('kid-header-pts').textContent = getBalance(activeKidId);
+  pendingReward = null;
+});
+
+// ─── Ledger ───────────────────────────────────────────────────────────────────
+
+function renderLedger() {
+  const ledger = loadLedger(activeKidId);
+  const list = document.getElementById('ledger-list');
+  list.innerHTML = '';
+
+  if (!ledger.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px 0;">No activity yet — complete some tasks!</div>';
+    return;
+  }
+
+  ledger.forEach(entry => {
+    const isEarn = entry.delta > 0;
+    const item = document.createElement('div');
+    item.className = 'ledger-item';
+    const icon = isEarn ? (entry.type === 'earn' ? '✅' : '↩️') : '🎁';
+    const time = new Date(entry.ts).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+    });
+    item.innerHTML = `
+      <div class="ledger-icon">${icon}</div>
+      <div class="ledger-info">
+        <div class="ledger-title">${entry.title}</div>
+        <div class="ledger-time">${time}</div>
+      </div>
+      <div class="ledger-delta ${isEarn ? 'earn' : 'spend'}">
+        ${isEarn ? '+' : ''}${entry.delta}
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+// ─── Parent Dashboard ─────────────────────────────────────────────────────────
+
+function openParentDashboard() {
+  activeParentKidId = cfg.kids[0].id;
+  renderParentKidTabs();
+  renderParentContent();
+  showView('parent');
+}
+
+document.getElementById('parent-back').addEventListener('click', () => {
+  renderProfiles();
+  showView('profiles');
+});
+
+function renderParentKidTabs() {
+  const tabs = document.getElementById('parent-kid-tabs');
+  tabs.innerHTML = '';
+  cfg.kids.forEach(kid => {
+    const btn = document.createElement('button');
+    btn.className = `parent-kid-tab ${kid.id === activeParentKidId ? 'active' : ''}`;
+    btn.textContent = `${kid.avatar} ${kid.name}`;
+    btn.addEventListener('click', () => {
+      activeParentKidId = kid.id;
+      renderParentKidTabs();
+      renderParentContent();
+    });
+    tabs.appendChild(btn);
+  });
+}
+
+function renderParentContent() {
+  const kid = cfg.kids.find(k => k.id === activeParentKidId);
+  const balance = getBalance(activeParentKidId);
+  const ledger = loadLedger(activeParentKidId);
+  const todayTasks = getTodayTasks();
+  const completions = loadCompletions();
+  const kidComp = completions[activeParentKidId] || {};
+  const doneTodayCount = todayTasks.filter(t => kidComp[t.id] === 'done').length;
+  const earnedToday = ledger
+    .filter(e => e.type === 'earn' && e.ts.startsWith(new Date().toISOString().slice(0,10)))
+    .reduce((s, e) => s + e.delta, 0);
+
+  const content = document.getElementById('parent-content');
+  content.innerHTML = `
+    <div class="parent-stat-grid">
+      <div class="parent-stat">
+        <div class="parent-stat-num">${balance}</div>
+        <div class="parent-stat-label">Total Points</div>
+      </div>
+      <div class="parent-stat">
+        <div class="parent-stat-num">${doneTodayCount}</div>
+        <div class="parent-stat-label">Tasks Today</div>
+      </div>
+      <div class="parent-stat">
+        <div class="parent-stat-num">${earnedToday}</div>
+        <div class="parent-stat-label">Pts Earned Today</div>
+      </div>
+      <div class="parent-stat">
+        <div class="parent-stat-num">${ledger.filter(e=>e.type==='spend').length}</div>
+        <div class="parent-stat-label">Rewards Redeemed</div>
+      </div>
+    </div>
+    <div class="parent-week-title">Recent Activity</div>
+    <div id="parent-ledger-list"></div>
+  `;
+
+  const pList = document.getElementById('parent-ledger-list');
+  if (!ledger.length) {
+    pList.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px 0;">No activity yet.</div>';
+    return;
+  }
+
+  ledger.slice(0, 20).forEach(entry => {
+    const isEarn = entry.delta > 0;
+    const item = document.createElement('div');
+    item.className = 'ledger-item';
+    const icon = isEarn ? (entry.type === 'earn' ? '✅' : '↩️') : '🎁';
+    const time = new Date(entry.ts).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+    });
+    item.innerHTML = `
+      <div class="ledger-icon">${icon}</div>
+      <div class="ledger-info">
+        <div class="ledger-title">${entry.title}</div>
+        <div class="ledger-time">${time}</div>
+      </div>
+      <div class="ledger-delta ${isEarn ? 'earn' : 'spend'}">
+        ${isEarn ? '+' : ''}${entry.delta}
+      </div>
+    `;
+    pList.appendChild(item);
+  });
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ─── Confetti ─────────────────────────────────────────────────────────────────
+
+function spawnConfetti() {
+  const colors = ['#a855f7','#f59e0b','#10b981','#3b82f6','#ef4444','#f472b6'];
+  for (let i = 0; i < 18; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `
+      left: ${Math.random() * 100}vw;
+      top: -10px;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      animation-delay: ${Math.random() * 0.4}s;
+      animation-duration: ${0.9 + Math.random() * 0.6}s;
+      width: ${6 + Math.random()*8}px;
+      height: ${6 + Math.random()*8}px;
+    `;
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
+
+// ─── Service Worker ───────────────────────────────────────────────────────────
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

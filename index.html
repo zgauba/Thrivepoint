@@ -6,23 +6,25 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Thrivepoint" />
-  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="theme-color" content="#0a0f0a" />
   <title>Thrivepoint</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <style>
-    /* ─── Reset & Base ─────────────────────────────────────── */
+    /* ─── Reset ─────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ─── Theme Definitions ─────────────────────────────────── */
+    /* Default: Deep Green & Amber (Option B) */
     :root {
-      --bg:         #0f0f1a;
-      --surface:    #1a1a2e;
-      --surface2:   #22223b;
-      --border:     #2e2e4a;
-      --accent:     #7c3aed;
-      --accent2:    #a855f7;
+      --bg:         #0a0f0a;
+      --surface:    #111811;
+      --surface2:   #1a231a;
+      --border:     #2a3a2a;
+      --accent:     #16a34a;
+      --accent2:    #4ade80;
       --gold:       #f59e0b;
-      --green:      #10b981;
+      --green:      #22c55e;
       --red:        #ef4444;
       --text:       #f1f5f9;
       --text-muted: #94a3b8;
@@ -30,6 +32,28 @@
       --radius-sm:  10px;
       --safe-top:   env(safe-area-inset-top, 0px);
       --safe-bot:   env(safe-area-inset-bottom, 0px);
+    }
+
+    [data-theme="gold"] {
+      --bg:         #0d1117;
+      --surface:    #161b22;
+      --surface2:   #1e2530;
+      --border:     #2d3748;
+      --accent:     #d97706;
+      --accent2:    #f0a500;
+      --gold:       #f0a500;
+      --green:      #22c55e;
+    }
+
+    [data-theme="navy"] {
+      --bg:         #0a0e1a;
+      --surface:    #111827;
+      --surface2:   #1a2235;
+      --border:     #2d3a52;
+      --accent:     #ea580c;
+      --accent2:    #f97316;
+      --gold:       #f59e0b;
+      --green:      #22c55e;
     }
 
     html, body {
@@ -50,7 +74,6 @@
       margin: 0 auto;
     }
 
-    /* ─── Views ─────────────────────────────────────────────── */
     .view { display: none; flex-direction: column; flex: 1; overflow: hidden; }
     .view.active { display: flex; }
 
@@ -62,755 +85,502 @@
       padding: 40px 24px;
       padding-top: calc(var(--safe-top) + 40px);
     }
-
-    .pin-logo {
-      font-size: 56px;
-      line-height: 1;
-    }
-
-    .pin-title {
-      font-size: 26px;
-      font-weight: 700;
-      text-align: center;
-    }
-
-    .pin-subtitle {
-      font-size: 14px;
-      color: var(--text-muted);
-      text-align: center;
-    }
-
-    .pin-dots {
-      display: flex;
-      gap: 16px;
-    }
-
+    .pin-logo { font-size: 56px; line-height: 1; }
+    .pin-title { font-size: 26px; font-weight: 700; text-align: center; }
+    .pin-subtitle { font-size: 14px; color: var(--text-muted); text-align: center; }
+    .pin-dots { display: flex; gap: 16px; }
     .pin-dot {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      background: transparent;
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid var(--border); background: transparent;
       transition: background 0.15s, border-color 0.15s;
     }
-
-    .pin-dot.filled {
-      background: var(--accent2);
-      border-color: var(--accent2);
-    }
-
+    .pin-dot.filled { background: var(--accent2); border-color: var(--accent2); }
     .pin-keypad {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      width: 100%;
-      max-width: 280px;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px; width: 100%; max-width: 280px;
     }
-
     .pin-key {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      font-size: 22px;
-      font-weight: 600;
-      height: 68px;
-      cursor: pointer;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 22px; font-weight: 600; height: 68px; cursor: pointer;
       transition: background 0.1s, transform 0.1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       -webkit-tap-highlight-color: transparent;
     }
-
     .pin-key:active { background: var(--accent); transform: scale(0.95); }
     .pin-key.del { font-size: 18px; }
     .pin-key.empty { visibility: hidden; }
-
-    .pin-error {
-      color: var(--red);
-      font-size: 13px;
-      min-height: 18px;
-      text-align: center;
-    }
+    .pin-error { color: var(--red); font-size: 13px; min-height: 18px; text-align: center; }
 
     /* ─── Profile Select ────────────────────────────────────── */
     #view-profiles {
-      align-items: center;
-      justify-content: center;
-      gap: 24px;
-      padding: 40px 24px;
-      padding-top: calc(var(--safe-top) + 40px);
+      align-items: center; justify-content: center;
+      gap: 20px; padding: 32px 24px;
+      padding-top: calc(var(--safe-top) + 32px);
+      overflow-y: auto;
     }
-
-    .profiles-title {
-      font-size: 22px;
-      font-weight: 700;
-      text-align: center;
-    }
-
-    .profiles-subtitle {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-
-    .profiles-grid {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
+    .profiles-title { font-size: 22px; font-weight: 700; text-align: center; }
+    .profiles-subtitle { font-size: 14px; color: var(--text-muted); }
+    .profiles-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
     .profile-card {
-      background: var(--surface);
-      border: 2px solid var(--border);
-      border-radius: 20px;
-      padding: 28px 24px;
-      cursor: pointer;
-      text-align: center;
-      transition: border-color 0.15s, transform 0.15s, background 0.15s;
-      min-width: 130px;
-      -webkit-tap-highlight-color: transparent;
+      background: var(--surface); border: 2px solid var(--border);
+      border-radius: 20px; padding: 28px 24px; cursor: pointer;
+      text-align: center; transition: border-color 0.15s, transform 0.15s, background 0.15s;
+      min-width: 130px; -webkit-tap-highlight-color: transparent;
     }
-
     .profile-card:active { transform: scale(0.95); }
     .profile-card:hover { border-color: var(--accent2); background: var(--surface2); }
-
-    .profile-avatar {
-      font-size: 52px;
-      line-height: 1;
-      margin-bottom: 10px;
-    }
-
-    .profile-name {
-      font-size: 17px;
-      font-weight: 700;
-    }
-
-    .profile-points {
-      font-size: 13px;
-      color: var(--gold);
-      margin-top: 4px;
-      font-weight: 600;
-    }
-
+    .profile-avatar { font-size: 52px; line-height: 1; margin-bottom: 10px; }
+    .profile-name { font-size: 17px; font-weight: 700; }
+    .profile-points { font-size: 13px; color: var(--gold); margin-top: 4px; font-weight: 600; }
+    .profile-week-pts { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
     .parent-btn {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-muted);
-      font-size: 14px;
-      padding: 10px 24px;
-      cursor: pointer;
-      transition: color 0.15s, border-color 0.15s;
-      -webkit-tap-highlight-color: transparent;
+      background: none; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text-muted); font-size: 14px; padding: 10px 24px; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s; -webkit-tap-highlight-color: transparent;
+      width: 100%; max-width: 280px;
     }
-
     .parent-btn:hover { color: var(--text); border-color: var(--accent2); }
 
     /* ─── Kid Dashboard ─────────────────────────────────────── */
-    #view-kid {
-      flex-direction: column;
-      overflow: hidden;
-    }
-
+    #view-kid { flex-direction: column; overflow: hidden; }
     .kid-header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 20px;
-      padding-top: calc(var(--safe-top) + 16px);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 16px; padding-top: calc(var(--safe-top) + 14px);
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
     }
-
-    .kid-header-avatar { font-size: 32px; }
-
-    .kid-header-info { flex: 1; }
-
-    .kid-header-name {
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-
-    .kid-header-date {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .kid-header-points {
+    .kid-header-avatar { font-size: 30px; cursor: pointer; }
+    .kid-header-info { flex: 1; min-width: 0; }
+    .kid-header-name { font-size: 17px; font-weight: 700; line-height: 1.2; }
+    .kid-header-date { font-size: 11px; color: var(--text-muted); }
+    .kid-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .kid-header-pts-total {
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 20px;
-      padding: 6px 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      border-radius: 20px; padding: 5px 14px;
+      display: flex; flex-direction: column; align-items: center;
     }
-
-    .kid-header-points-num {
-      font-size: 20px;
-      font-weight: 800;
-      line-height: 1;
-      color: #fff;
-    }
-
-    .kid-header-points-label {
-      font-size: 10px;
-      color: rgba(255,255,255,0.75);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+    .kid-header-pts-num { font-size: 18px; font-weight: 800; line-height: 1; color: #fff; }
+    .kid-header-pts-label { font-size: 9px; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 0.5px; }
+    .kid-header-week-pts { font-size: 11px; color: var(--text-muted); text-align: right; }
 
     /* ─── Tab Bar ───────────────────────────────────────────── */
     .tab-bar {
-      display: flex;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
+      display: flex; background: var(--surface);
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
     }
-
     .tab-btn {
-      flex: 1;
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      color: var(--text-muted);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 12px 8px;
-      cursor: pointer;
-      transition: color 0.15s, border-color 0.15s;
-      -webkit-tap-highlight-color: transparent;
+      flex: 1; background: none; border: none;
+      border-bottom: 3px solid transparent; color: var(--text-muted);
+      font-size: 12px; font-weight: 600; padding: 11px 4px; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s; -webkit-tap-highlight-color: transparent;
     }
-
     .tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); }
 
-    /* ─── Scrollable Content ────────────────────────────────── */
     .scroll-area {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 16px;
-      padding-bottom: calc(var(--safe-bot) + 16px);
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 14px; padding-bottom: calc(var(--safe-bot) + 14px);
     }
-
-    /* ─── Tab Panels ────────────────────────────────────────── */
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
     /* ─── Progress Bar ──────────────────────────────────────── */
     .progress-banner {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      margin-bottom: 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px;
     }
-
     .progress-banner-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
     }
-
-    .progress-label { font-size: 13px; color: var(--text-muted); }
-    .progress-count { font-size: 13px; font-weight: 700; color: var(--gold); }
-
-    .progress-track {
-      background: var(--border);
-      border-radius: 99px;
-      height: 8px;
-      overflow: hidden;
-    }
-
+    .progress-label { font-size: 12px; color: var(--text-muted); }
+    .progress-count { font-size: 12px; font-weight: 700; color: var(--gold); }
+    .progress-track { background: var(--border); border-radius: 99px; height: 7px; overflow: hidden; }
     .progress-fill {
-      height: 100%;
-      border-radius: 99px;
+      height: 100%; border-radius: 99px;
       background: linear-gradient(90deg, var(--accent), var(--accent2));
       transition: width 0.4s ease;
     }
 
-    /* ─── Category Section ──────────────────────────────────── */
-    .category-section { margin-bottom: 20px; }
-
-    .category-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .category-icon { font-size: 18px; }
-
-    .category-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
+    /* ─── Category & Task ───────────────────────────────────── */
+    .category-section { margin-bottom: 18px; }
+    .category-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .category-icon { font-size: 16px; }
+    .category-name { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .category-badge {
-      margin-left: auto;
-      background: var(--surface2);
-      border-radius: 99px;
-      padding: 2px 10px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
+      margin-left: auto; background: var(--surface2); border-radius: 99px;
+      padding: 2px 9px; font-size: 11px; font-weight: 700; color: var(--text-muted);
     }
+    .category-badge.complete { background: rgba(34,197,94,0.15); color: var(--green); }
 
-    .category-badge.complete {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--green);
-    }
-
-    /* ─── Task Card ─────────────────────────────────────────── */
     .task-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 14px 16px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      cursor: pointer;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 7px;
+      display: flex; align-items: center; gap: 12px; cursor: pointer;
       transition: background 0.15s, border-color 0.15s, transform 0.1s;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
+      -webkit-tap-highlight-color: transparent; user-select: none;
     }
-
     .task-card:active { transform: scale(0.98); }
-
-    .task-card.done {
-      background: rgba(16, 185, 129, 0.06);
-      border-color: rgba(16, 185, 129, 0.3);
-    }
-
-    .task-card.skipped {
-      opacity: 0.45;
-    }
-
+    .task-card.done { background: rgba(34,197,94,0.06); border-color: rgba(34,197,94,0.3); }
     .task-check {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: background 0.15s, border-color 0.15s;
-      font-size: 14px;
+      width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.15s, border-color 0.15s; font-size: 13px;
     }
-
-    .task-card.done .task-check {
-      background: var(--green);
-      border-color: var(--green);
-    }
-
+    .task-card.done .task-check { background: var(--green); border-color: var(--green); }
     .task-card.done .task-check::after { content: '✓'; color: #fff; font-weight: 700; }
-
     .task-info { flex: 1; }
-
-    .task-title {
-      font-size: 15px;
-      font-weight: 600;
-      line-height: 1.3;
-    }
-
-    .task-card.done .task-title {
-      text-decoration: line-through;
-      color: var(--text-muted);
-    }
-
-    .task-subtitle {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .task-points {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--gold);
-      flex-shrink: 0;
-    }
-
+    .task-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+    .task-card.done .task-title { text-decoration: line-through; color: var(--text-muted); }
+    .task-points { font-size: 13px; font-weight: 700; color: var(--gold); flex-shrink: 0; }
     .task-card.done .task-points { color: var(--text-muted); }
 
     /* ─── Rewards Tab ───────────────────────────────────────── */
     .rewards-header {
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 20px;
-      text-align: center;
+      border-radius: var(--radius); padding: 18px; margin-bottom: 16px; text-align: center;
     }
-
-    .rewards-balance-label {
-      font-size: 13px;
-      color: rgba(255,255,255,0.75);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .rewards-balance-num {
-      font-size: 48px;
-      font-weight: 800;
-      color: #fff;
-      line-height: 1.1;
-    }
-
-    .rewards-balance-unit {
-      font-size: 14px;
-      color: rgba(255,255,255,0.75);
-    }
-
+    .rewards-balance-label { font-size: 12px; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 0.5px; }
+    .rewards-balance-num { font-size: 44px; font-weight: 800; color: #fff; line-height: 1.1; }
+    .rewards-balance-unit { font-size: 13px; color: rgba(255,255,255,0.75); }
+    .rewards-week-pts { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; }
     .rewards-section-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
+      font-size: 12px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
     }
-
     .reward-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 16px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      cursor: pointer;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px; margin-bottom: 9px;
+      display: flex; align-items: center; gap: 12px; cursor: pointer;
       transition: background 0.15s, border-color 0.15s, transform 0.1s;
       -webkit-tap-highlight-color: transparent;
     }
-
     .reward-card:active { transform: scale(0.98); }
-    .reward-card.affordable { border-color: rgba(124, 58, 237, 0.4); }
+    .reward-card.affordable { border-color: rgba(74,222,128,0.35); }
     .reward-card.affordable:hover { border-color: var(--accent2); background: var(--surface2); }
     .reward-card.locked { opacity: 0.5; cursor: not-allowed; }
-
-    .reward-icon { font-size: 30px; flex-shrink: 0; }
-
+    .reward-card.requested { border-color: var(--gold); opacity: 0.8; }
+    .reward-icon { font-size: 28px; flex-shrink: 0; }
     .reward-info { flex: 1; }
+    .reward-title { font-size: 14px; font-weight: 600; }
+    .reward-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .reward-cost { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+    .reward-cost-num { font-size: 17px; font-weight: 800; color: var(--gold); }
+    .reward-cost-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
 
-    .reward-title { font-size: 15px; font-weight: 600; }
-
-    .reward-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-
-    .reward-cost {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      flex-shrink: 0;
+    /* ─── Weekly Progress Tab ───────────────────────────────── */
+    .week-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
     }
-
-    .reward-cost-num {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--gold);
+    .week-nav-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 18px;
+      width: 40px; height: 40px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
     }
-
-    .reward-cost-label {
-      font-size: 10px;
-      color: var(--text-muted);
-      text-transform: uppercase;
+    .week-nav-label { font-size: 13px; font-weight: 700; color: var(--text-muted); }
+    .week-total-card {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
+      display: flex; justify-content: space-around; text-align: center;
     }
+    .week-total-item {}
+    .week-total-num { font-size: 28px; font-weight: 800; color: #fff; }
+    .week-total-label { font-size: 11px; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 0.4px; }
+    .week-day-row {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 11px 14px; margin-bottom: 7px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .week-day-row.today { border-color: var(--accent2); }
+    .week-day-name { font-size: 13px; font-weight: 700; min-width: 36px; }
+    .week-day-date { font-size: 11px; color: var(--text-muted); flex: 1; }
+    .week-day-tasks { font-size: 11px; color: var(--text-muted); }
+    .week-day-pts { font-size: 15px; font-weight: 800; color: var(--gold); min-width: 40px; text-align: right; }
+    .week-reward-goal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px; margin-top: 14px;
+    }
+    .week-reward-goal-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .week-reward-goal-bar { background: var(--border); border-radius: 99px; height: 10px; overflow: hidden; margin-bottom: 6px; }
+    .week-reward-goal-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--gold), var(--accent2));
+      transition: width 0.4s ease;
+    }
+    .week-reward-goal-label { font-size: 11px; color: var(--text-muted); }
 
-    /* ─── Ledger Tab ────────────────────────────────────────── */
+    /* ─── History / Ledger Tab ──────────────────────────────── */
+    .history-date-nav {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    }
+    .history-date-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 16px;
+      width: 38px; height: 38px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .history-date-label {
+      flex: 1; text-align: center; font-size: 14px; font-weight: 700;
+      cursor: pointer; padding: 8px;
+    }
     .ledger-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 12px 16px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 11px 14px; margin-bottom: 7px;
+      display: flex; align-items: center; gap: 11px;
     }
-
-    .ledger-icon { font-size: 22px; flex-shrink: 0; }
-
+    .ledger-icon { font-size: 20px; flex-shrink: 0; }
     .ledger-info { flex: 1; }
-
-    .ledger-title { font-size: 14px; font-weight: 600; }
-
+    .ledger-title { font-size: 13px; font-weight: 600; }
     .ledger-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
-    .ledger-delta {
-      font-size: 16px;
-      font-weight: 800;
-      flex-shrink: 0;
-    }
-
+    .ledger-delta { font-size: 15px; font-weight: 800; flex-shrink: 0; }
     .ledger-delta.earn { color: var(--green); }
     .ledger-delta.spend { color: var(--red); }
 
+    /* ─── Avatar Picker Modal ───────────────────────────────── */
+    #avatar-modal .modal-sheet { max-height: 75vh; overflow-y: auto; }
+    .avatar-grid {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 12px;
+    }
+    .avatar-option {
+      font-size: 30px; text-align: center; padding: 8px; border-radius: var(--radius-sm);
+      cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .avatar-option:hover, .avatar-option.selected { border-color: var(--accent2); background: var(--surface2); }
+
+    /* ─── Theme Picker ──────────────────────────────────────── */
+    .theme-picker { display: flex; gap: 10px; margin-top: 10px; }
+    .theme-swatch {
+      flex: 1; border-radius: var(--radius-sm); padding: 12px 8px;
+      cursor: pointer; text-align: center; border: 2px solid transparent;
+      transition: border-color 0.15s; font-size: 12px; font-weight: 600;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .theme-swatch.active { border-color: var(--text); }
+    .theme-swatch-dot { width: 20px; height: 20px; border-radius: 50%; margin: 0 auto 6px; }
+
     /* ─── Parent Dashboard ──────────────────────────────────── */
-    #view-parent {
-      flex-direction: column;
-      overflow: hidden;
-    }
-
+    #view-parent { flex-direction: column; overflow: hidden; }
     .parent-header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 20px;
-      padding-top: calc(var(--safe-top) + 16px);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 16px; padding-top: calc(var(--safe-top) + 14px);
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
     }
-
-    .parent-header-title {
-      font-size: 18px;
-      font-weight: 700;
-      flex: 1;
-    }
-
+    .parent-header-title { font-size: 17px; font-weight: 700; flex: 1; }
     .back-btn {
-      background: none;
-      border: none;
-      color: var(--accent2);
-      font-size: 15px;
-      cursor: pointer;
-      padding: 4px;
+      background: none; border: none; color: var(--accent2);
+      font-size: 15px; cursor: pointer; padding: 4px;
       -webkit-tap-highlight-color: transparent;
     }
-
+    .parent-tab-bar {
+      display: flex; background: var(--surface);
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .parent-tab-btn {
+      flex: 1; background: none; border: none;
+      border-bottom: 3px solid transparent; color: var(--text-muted);
+      font-size: 12px; font-weight: 600; padding: 11px 4px; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .parent-tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); }
     .parent-kid-tabs {
-      display: flex;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 16px;
-      gap: 4px;
-      flex-shrink: 0;
+      display: flex; background: var(--surface2);
+      border-bottom: 1px solid var(--border); padding: 0 12px; gap: 4px; flex-shrink: 0;
     }
-
     .parent-kid-tab {
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      color: var(--text-muted);
-      font-size: 14px;
-      font-weight: 600;
-      padding: 12px 16px;
-      cursor: pointer;
-      transition: color 0.15s, border-color 0.15s;
+      background: none; border: none; border-bottom: 3px solid transparent;
+      color: var(--text-muted); font-size: 13px; font-weight: 600;
+      padding: 10px 14px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
-
     .parent-kid-tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
-
-    .parent-stat-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
+    .parent-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
     .parent-stat {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 16px;
-      text-align: center;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px; text-align: center;
     }
-
-    .parent-stat-num {
-      font-size: 28px;
-      font-weight: 800;
-      color: var(--accent2);
+    .parent-stat-num { font-size: 26px; font-weight: 800; color: var(--accent2); }
+    .parent-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+    .section-title {
+      font-size: 12px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; margin-top: 16px;
     }
-
-    .parent-stat-label {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
+    .section-title:first-child { margin-top: 0; }
+    .revoke-row {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 11px 14px; margin-bottom: 7px;
+      display: flex; align-items: center; gap: 10px;
     }
-
-    .parent-week-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
+    .revoke-row-info { flex: 1; }
+    .revoke-row-title { font-size: 13px; font-weight: 600; }
+    .revoke-row-pts { font-size: 11px; color: var(--green); }
+    .revoke-btn {
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--radius-sm); color: var(--red); font-size: 12px;
+      font-weight: 600; padding: 6px 12px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
-
-    .week-row {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 12px 16px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    .approve-btn {
+      background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3);
+      border-radius: var(--radius-sm); color: var(--green); font-size: 12px;
+      font-weight: 600; padding: 6px 10px; cursor: pointer; margin-right: 6px;
+      -webkit-tap-highlight-color: transparent;
     }
-
-    .week-row-day { font-size: 14px; font-weight: 600; }
-
-    .week-row-tasks { font-size: 12px; color: var(--text-muted); }
-
-    .week-row-pts {
-      font-size: 16px;
-      font-weight: 800;
-      color: var(--gold);
+    .deny-btn {
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--radius-sm); color: var(--red); font-size: 12px;
+      font-weight: 600; padding: 6px 10px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
+    .request-row {
+      background: var(--surface); border: 1px solid var(--gold);
+      border-radius: var(--radius-sm); padding: 11px 14px; margin-bottom: 7px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .request-row-info { flex: 1; }
+    .request-row-title { font-size: 13px; font-weight: 600; }
+    .request-row-cost { font-size: 11px; color: var(--gold); }
+    /* ─── Manage Panel ──────────────────────────────────────── */
+    .manage-section { margin-bottom: 20px; }
+    .manage-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 11px 14px; margin-bottom: 7px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .manage-item-info { flex: 1; }
+    .manage-item-title { font-size: 13px; font-weight: 600; }
+    .manage-item-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .manage-edit-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-muted); font-size: 12px;
+      padding: 5px 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .manage-delete-btn {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
+      border-radius: var(--radius-sm); color: var(--red); font-size: 12px;
+      padding: 5px 10px; cursor: pointer; margin-left: 4px; -webkit-tap-highlight-color: transparent;
+    }
+    .add-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: var(--surface2); border: 1px dashed var(--border);
+      border-radius: var(--radius-sm); padding: 12px; width: 100%;
+      color: var(--text-muted); font-size: 13px; font-weight: 600;
+      cursor: pointer; -webkit-tap-highlight-color: transparent; margin-top: 4px;
+    }
+    .add-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    /* ─── Form inside modals ────────────────────────────────── */
+    .form-field { margin-bottom: 14px; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.4px; }
+    .form-input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 15px;
+      padding: 10px 12px; outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus { border-color: var(--accent2); }
+    .form-select {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 15px;
+      padding: 10px 12px; outline: none; appearance: none;
+    }
+    .form-row { display: flex; gap: 10px; }
+    .form-row .form-field { flex: 1; }
+    .day-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+    .day-chip {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 99px; padding: 5px 10px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .day-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .preset-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .preset-item {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px; cursor: pointer;
+      font-size: 13px; transition: border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .preset-item:hover { border-color: var(--accent2); }
+    .preset-item-title { font-weight: 600; }
+    .preset-item-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
     /* ─── Toast ─────────────────────────────────────────────── */
     #toast {
-      position: fixed;
-      bottom: calc(var(--safe-bot) + 24px);
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      padding: 10px 22px;
-      font-size: 14px;
-      font-weight: 600;
-      white-space: nowrap;
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      z-index: 999;
-      pointer-events: none;
+      position: fixed; bottom: calc(var(--safe-bot) + 24px);
+      left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 99px; padding: 10px 20px; font-size: 13px; font-weight: 600;
+      white-space: nowrap; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 999; pointer-events: none;
     }
-
     #toast.show { transform: translateX(-50%) translateY(0); }
 
     /* ─── Modal ─────────────────────────────────────────────── */
     .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 100;
-      align-items: flex-end;
-      justify-content: center;
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72); z-index: 100;
+      align-items: flex-end; justify-content: center;
     }
-
     .modal-overlay.open { display: flex; }
-
     .modal-sheet {
-      background: var(--surface);
-      border-radius: 24px 24px 0 0;
-      padding: 24px;
-      padding-bottom: calc(var(--safe-bot) + 24px);
-      width: 100%;
-      max-width: 480px;
+      background: var(--surface); border-radius: 24px 24px 0 0;
+      padding: 20px; padding-bottom: calc(var(--safe-bot) + 20px);
+      width: 100%; max-width: 480px;
       animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
-    .modal-handle {
-      width: 40px;
-      height: 4px;
-      background: var(--border);
-      border-radius: 99px;
-      margin: 0 auto 20px;
-    }
-
-    .modal-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .modal-desc {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
-
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 99px; margin: 0 auto 18px; }
+    .modal-title { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+    .modal-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
     .modal-cost-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(245, 158, 11, 0.15);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      border-radius: 99px;
-      padding: 6px 16px;
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--gold);
-      margin-bottom: 24px;
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 99px; padding: 5px 14px; font-size: 14px; font-weight: 700;
+      color: var(--gold); margin-bottom: 20px;
     }
-
-    .modal-actions { display: flex; gap: 12px; }
-
+    .modal-actions { display: flex; gap: 10px; }
     .btn {
-      flex: 1;
-      border: none;
-      border-radius: var(--radius-sm);
-      font-size: 16px;
-      font-weight: 700;
-      padding: 14px;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-      -webkit-tap-highlight-color: transparent;
+      flex: 1; border: none; border-radius: var(--radius-sm);
+      font-size: 15px; font-weight: 700; padding: 13px; cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s; -webkit-tap-highlight-color: transparent;
     }
-
     .btn:active { transform: scale(0.97); }
     .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
     .btn-secondary { background: var(--surface2); color: var(--text-muted); }
+    .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
 
     /* ─── Confetti ──────────────────────────────────────────── */
     .confetti-piece {
-      position: fixed;
-      width: 10px;
-      height: 10px;
-      border-radius: 2px;
-      pointer-events: none;
-      z-index: 9999;
-      animation: confettiFall 1.2s ease-in forwards;
+      position: fixed; width: 10px; height: 10px; border-radius: 2px;
+      pointer-events: none; z-index: 9999; animation: confettiFall 1.2s ease-in forwards;
     }
-
     @keyframes confettiFall {
       0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
       100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
     }
 
-    /* ─── Update Banner ─────────────────────────────────────────────────────────────── */
+    /* ─── Update Banner ─────────────────────────────────────── */
     #update-banner {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 9999;
-      background: var(--green);
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      text-align: center;
-      padding: calc(var(--safe-top) + 10px) 16px 10px;
+      display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: var(--green); color: #fff; font-size: 14px; font-weight: 600;
+      text-align: center; padding: calc(var(--safe-top) + 10px) 16px 10px;
       animation: slideDown 0.3s ease;
     }
     #update-banner.show { display: block; }
-    @keyframes slideDown {
-      from { transform: translateY(-100%); }
-      to   { transform: translateY(0); }
+    @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+
+    /* ─── Notification Badge ────────────────────────────────── */
+    .notif-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--red); color: #fff; border-radius: 99px;
+      font-size: 10px; font-weight: 800; min-width: 16px; height: 16px;
+      padding: 0 4px; margin-left: 4px; vertical-align: middle;
     }
   </style>
 </head>
 <body>
-<!-- ── Update Banner ─────────────────────────────────────────────────────────────── -->
 <div id="update-banner">✅ App updated! Reloading…</div>
 <div id="app">
 
@@ -819,7 +589,7 @@
     <div class="pin-logo">🌟</div>
     <div>
       <div class="pin-title">Thrivepoint</div>
-      <div class="pin-subtitle">Summer Challenge</div>
+      <div class="pin-subtitle">Family Challenge</div>
     </div>
     <div class="pin-dots">
       <div class="pin-dot" id="dot-0"></div>
@@ -846,35 +616,37 @@
 
   <!-- ── Profile Select ─────────────────────────────────────── -->
   <div id="view-profiles" class="view">
-    <div class="profiles-title">Who's checking in? 👋</div>
+    <div class="profiles-title" style="margin-top:8px">Who's checking in? 👋</div>
     <div class="profiles-subtitle">Tap your name to see your tasks</div>
     <div class="profiles-grid" id="profiles-grid"></div>
     <button class="parent-btn" id="btn-parent-mode">🔐 Parent View</button>
-    <button class="parent-btn" id="btn-check-update" style="margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--text-muted);font-size:13px;padding:10px 20px;">Check for Update</button>
+    <button class="parent-btn" id="btn-check-update" style="margin-top:6px;font-size:12px;">🔄 Check for Update</button>
   </div>
 
   <!-- ── Kid Dashboard ──────────────────────────────────────── -->
   <div id="view-kid" class="view">
     <div class="kid-header">
       <button class="back-btn" id="kid-back">← Back</button>
-      <div class="kid-header-avatar" id="kid-header-avatar"></div>
+      <div class="kid-header-avatar" id="kid-header-avatar" title="Tap to change avatar"></div>
       <div class="kid-header-info">
         <div class="kid-header-name" id="kid-header-name"></div>
         <div class="kid-header-date" id="kid-header-date"></div>
       </div>
-      <div class="kid-header-points">
-        <div class="kid-header-points-num" id="kid-header-pts">0</div>
-        <div class="kid-header-points-label">pts</div>
+      <div class="kid-header-right">
+        <div class="kid-header-pts-total">
+          <div class="kid-header-pts-num" id="kid-header-pts">0</div>
+          <div class="kid-header-pts-label">total pts</div>
+        </div>
+        <div class="kid-header-week-pts" id="kid-header-week-pts">0 this week</div>
       </div>
     </div>
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="tasks">✅ Tasks</button>
       <button class="tab-btn" data-tab="rewards">🎁 Rewards</button>
-      <button class="tab-btn" data-tab="ledger">📊 History</button>
+      <button class="tab-btn" data-tab="week">📅 Week</button>
+      <button class="tab-btn" data-tab="history">📊 History</button>
     </div>
     <div class="scroll-area">
-
-      <!-- Tasks Panel -->
       <div class="tab-panel active" id="panel-tasks">
         <div class="progress-banner">
           <div class="progress-banner-top">
@@ -887,23 +659,29 @@
         </div>
         <div id="tasks-list"></div>
       </div>
-
-      <!-- Rewards Panel -->
       <div class="tab-panel" id="panel-rewards">
         <div class="rewards-header">
           <div class="rewards-balance-label">Your Balance</div>
           <div class="rewards-balance-num" id="rewards-balance">0</div>
           <div class="rewards-balance-unit">points</div>
+          <div class="rewards-week-pts" id="rewards-week-pts"></div>
         </div>
-        <div class="rewards-section-title">Available Rewards</div>
-        <div id="rewards-list"></div>
+        <div class="rewards-section-title">Daily Rewards</div>
+        <div id="rewards-list-daily"></div>
+        <div class="rewards-section-title" style="margin-top:14px">Weekly Rewards</div>
+        <div id="rewards-list-weekly"></div>
       </div>
-
-      <!-- Ledger Panel -->
-      <div class="tab-panel" id="panel-ledger">
+      <div class="tab-panel" id="panel-week">
+        <div id="week-content"></div>
+      </div>
+      <div class="tab-panel" id="panel-history">
+        <div class="history-date-nav">
+          <button class="history-date-btn" id="history-prev">‹</button>
+          <div class="history-date-label" id="history-date-label">Today</div>
+          <button class="history-date-btn" id="history-next">›</button>
+        </div>
         <div id="ledger-list"></div>
       </div>
-
     </div>
   </div>
 
@@ -913,9 +691,18 @@
       <button class="back-btn" id="parent-back">← Back</button>
       <div class="parent-header-title">🔐 Parent View</div>
     </div>
+    <div class="parent-tab-bar">
+      <button class="parent-tab-btn active" data-ptab="overview">📊 Overview</button>
+      <button class="parent-tab-btn" data-ptab="manage">⚙️ Manage</button>
+    </div>
     <div class="parent-kid-tabs" id="parent-kid-tabs"></div>
     <div class="scroll-area">
-      <div id="parent-content"></div>
+      <div id="parent-overview-panel">
+        <div id="parent-content"></div>
+      </div>
+      <div id="parent-manage-panel" style="display:none">
+        <div id="parent-manage-content"></div>
+      </div>
     </div>
   </div>
 
@@ -928,9 +715,54 @@
     <div class="modal-title" id="modal-reward-title"></div>
     <div class="modal-desc" id="modal-reward-desc"></div>
     <div class="modal-cost-badge">⭐ <span id="modal-reward-cost"></span> points</div>
+    <div id="modal-reward-type-note" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
       <button class="btn btn-primary" id="modal-confirm">Redeem!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Avatar Picker Modal ─────────────────────────────────── -->
+<div class="modal-overlay" id="avatar-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Choose Your Avatar</div>
+    <div class="modal-desc">Pick an emoji that represents you!</div>
+    <div class="avatar-grid" id="avatar-grid"></div>
+    <div style="margin-top:18px">
+      <div class="modal-title" style="font-size:15px;margin-bottom:8px">Choose Your Theme</div>
+      <div class="theme-picker" id="theme-picker"></div>
+    </div>
+    <div class="modal-actions" style="margin-top:18px">
+      <button class="btn btn-secondary" id="avatar-cancel">Cancel</button>
+      <button class="btn btn-primary" id="avatar-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Undo Task Modal ─────────────────────────────────────── -->
+<div class="modal-overlay" id="undo-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Undo Task?</div>
+    <div class="modal-desc" id="undo-modal-desc"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="undo-cancel">Keep It</button>
+      <button class="btn btn-danger" id="undo-confirm">Undo ↩️</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Manage Item Modal (add/edit category, task, reward) ─── -->
+<div class="modal-overlay" id="manage-modal">
+  <div class="modal-sheet" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="manage-modal-title">Add Item</div>
+    <div id="manage-modal-body"></div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" id="manage-cancel">Cancel</button>
+      <button class="btn btn-primary" id="manage-save">Save</button>
     </div>
   </div>
 </div>
@@ -942,126 +774,216 @@
 // ─── Cloudflare Worker API ───────────────────────────────────────────────────
 
 const API = 'https://thrivepoint-api.zgauba.workers.dev';
-let PIN = '1234'; // updated after config loads
+let PIN = '1234';
 
 async function apiFetch(path, options = {}) {
   const res = await fetch(`${API}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Thrivepoint-Pin': PIN,
-      ...(options.headers || {}),
-    },
+    headers: { 'Content-Type': 'application/json', 'X-Thrivepoint-Pin': PIN, ...(options.headers || {}) },
   });
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json();
 }
 
-// ─── App Data ────────────────────────────────────────────────────────────────
+// ─── Default Config ──────────────────────────────────────────────────────────
 
 const DEFAULT_CONFIG = {
-  pin: "1234",
+  pin: '1234',
   kids: [
-    { id: "k1", name: "Noor",  avatar: "👧", color: "#a855f7" },
-    { id: "k2", name: "Shaan", avatar: "👦", color: "#3b82f6" }
+    { id: 'k1', name: 'Noor',  avatar: '👧🏽', theme: 'green' },
+    { id: 'k2', name: 'Shaan', avatar: '👦🏽', theme: 'navy'  },
   ],
   categories: [
-    { id: "c1", name: "Daily Core Habits", icon: "🛏️" },
-    { id: "c2", name: "Daily Knowledge",   icon: "📚" },
-    { id: "c3", name: "Creative",          icon: "🎨" },
-    { id: "c4", name: "By Parent Request", icon: "📋" },
-    { id: "c5", name: "Islam",             icon: "🕌" }
+    { id: 'c1', name: 'Daily Core Habits', icon: '🛏️' },
+    { id: 'c2', name: 'Daily Knowledge',   icon: '📚' },
+    { id: 'c3', name: 'Creative',          icon: '🎨' },
+    { id: 'c4', name: 'By Parent Request', icon: '📋' },
+    { id: 'c5', name: 'Islam',             icon: '🕌' },
   ],
   tasks: [
-    // Daily Core Habits
-    { id: "t01", catId: "c1", title: "Make Your Bed",            points: 2, days: [1,2,3,4,5,6,0] },
-    { id: "t02", catId: "c1", title: "Help Empty the Dishwasher",points: 2, days: [1,2,3,4,5,6,0] },
-    { id: "t03", catId: "c1", title: "Go Outside (30 mins)",     points: 2, days: [1,2,3,4,5,6,0] },
-    // Daily Knowledge
-    { id: "t04", catId: "c2", title: "Read (30 mins)",           points: 3, days: [1,2,3,4,5,6,0] },
-    { id: "t05", catId: "c2", title: "Wood Math (1 page)",       points: 3, days: [1,2,3,4,5,6,0] },
-    { id: "t06", catId: "c2", title: "Qur'an with Nani (30 mins)",points:3, days: [1,2,3,4,5,6,0] },
-    // Creative
-    { id: "t07", catId: "c3", title: "Practice Piano (15 mins)", points: 2, days: [1,2,3,4,5] },
-    { id: "t08", catId: "c3", title: "Noteworks App (15 mins)",  points: 2, days: [2,4] },
-    // By Parent Request
-    { id: "t09", catId: "c4", title: "Tidy the Basement",        points: 3, days: [1,2,3,4,5,6,0] },
-    { id: "t10", catId: "c4", title: "Take a Bath",              points: 3, days: [1,3,5] },
-    // Islam
-    { id: "t11", catId: "c5", title: "Jum'ah (Friday) Prayer",   points: 5, days: [5] },
-    { id: "t12", catId: "c5", title: "Fajr (Dawn) — 2 Rak'ahs",  points: 2, days: [1,2,3,4,5,6,0] },
-    { id: "t13", catId: "c5", title: "Dhuhr (Midday) — 4 Rak'ahs",points:2, days: [1,2,3,4,5,6,0] },
-    { id: "t14", catId: "c5", title: "Asr (Afternoon) — 4 Rak'ahs",points:2,days: [1,2,3,4,5,6,0] },
-    { id: "t15", catId: "c5", title: "Maghrib (Sunset) — 3 Rak'ahs",points:2,days:[1,2,3,4,5,6,0] },
-    { id: "t16", catId: "c5", title: "Isha (Night) — 4 Rak'ahs", points: 2, days: [1,2,3,4,5,6,0] }
+    { id: 't01', catId: 'c1', title: 'Make Your Bed',              points: 2, days: [0,1,2,3,4,5,6] },
+    { id: 't02', catId: 'c1', title: 'Help Empty the Dishwasher',  points: 2, days: [0,1,2,3,4,5,6] },
+    { id: 't03', catId: 'c1', title: 'Go Outside (30 mins)',       points: 2, days: [0,1,2,3,4,5,6] },
+    { id: 't04', catId: 'c2', title: 'Read (30 mins)',             points: 3, days: [0,1,2,3,4,5,6] },
+    { id: 't05', catId: 'c2', title: 'Wood Math (1 page)',         points: 3, days: [0,1,2,3,4,5,6] },
+    { id: 't06', catId: 'c2', title: "Qur'an with Nani (30 mins)", points: 3, days: [0,1,2,3,4,5,6] },
+    { id: 't07', catId: 'c3', title: 'Practice Piano (15 mins)',   points: 2, days: [1,2,3,4,5] },
+    { id: 't08', catId: 'c3', title: 'Noteworks App (15 mins)',    points: 2, days: [2,4] },
+    { id: 't09', catId: 'c4', title: 'Tidy the Basement',         points: 3, days: [0,1,2,3,4,5,6] },
+    { id: 't10', catId: 'c4', title: 'Take a Bath',               points: 3, days: [1,3,5] },
+    { id: 't11', catId: 'c5', title: "Jum'ah (Friday) Prayer",    points: 5, days: [5] },
+    { id: 't12', catId: 'c5', title: "Fajr — 2 Rak'ahs",          points: 2, days: [0,1,2,3,4,5,6] },
+    { id: 't13', catId: 'c5', title: "Dhuhr — 4 Rak'ahs",         points: 2, days: [0,1,2,3,4,5,6] },
+    { id: 't14', catId: 'c5', title: "Asr — 4 Rak'ahs",           points: 2, days: [0,1,2,3,4,5,6] },
+    { id: 't15', catId: 'c5', title: "Maghrib — 3 Rak'ahs",       points: 2, days: [0,1,2,3,4,5,6] },
+    { id: 't16', catId: 'c5', title: "Isha — 4 Rak'ahs",          points: 2, days: [0,1,2,3,4,5,6] },
   ],
   rewards: [
-    { id: "r1", icon: "📱", title: "+1 Hr iPad Time",       desc: "Earn extra screen time today!", cost: 10, type: "daily" },
-    { id: "r2", icon: "⏭️", title: "Skip a Task Tomorrow",  desc: "Skip one task tomorrow (not the same one twice in a row).", cost: 15, type: "daily" },
-    { id: "r3", icon: "💵", title: "$5 In-App Purchase",    desc: "A $5 in-app purchase of your choice.", cost: 95, type: "weekly" },
-    { id: "r4", icon: "🎬", title: "Movie Theater",         desc: "A trip to the movies!", cost: 120, type: "weekly" },
-    { id: "r5", icon: "🔐", title: "Escape Room",           desc: "An escape room adventure!", cost: 150, type: "weekly" },
-    { id: "r6", icon: "💡", title: "Your Suggestion",       desc: "Suggest a reward to Mom & Dad.", cost: 100, type: "weekly" }
-  ]
+    { id: 'r1', icon: '📱', title: '+1 Hr iPad Time',      desc: 'Earn extra screen time today!',                    cost: 10,  type: 'daily'  },
+    { id: 'r2', icon: '⏭️', title: 'Skip a Task Tomorrow', desc: 'Skip one task tomorrow (not the same one twice).',  cost: 15,  type: 'daily'  },
+    { id: 'r3', icon: '💵', title: '$5 In-App Purchase',   desc: 'A $5 in-app purchase of your choice.',             cost: 95,  type: 'weekly' },
+    { id: 'r4', icon: '🎬', title: 'Movie Theater',        desc: 'A trip to the movies!',                            cost: 120, type: 'weekly' },
+    { id: 'r5', icon: '🔐', title: 'Escape Room',          desc: 'An escape room adventure!',                        cost: 150, type: 'weekly' },
+    { id: 'r6', icon: '💡', title: 'Your Suggestion',      desc: 'Suggest a reward to Mom & Dad.',                   cost: 100, type: 'weekly' },
+  ],
 };
 
-// ─── API Helpers ────────────────────────────────────────────────────────────────
+// ─── Avatar Options ──────────────────────────────────────────────────────────
 
-// In-memory cache to avoid redundant API calls within a session
-const _cache = { ledgers: {}, today: {}, config: null };
+const AVATARS = [
+  // Animals (safe, no skin tone issues)
+  '🦁','🐯','🐻','🐼','🐨','🦊','🐸','🐧','🦋','🐬','🦄','🐉',
+  '🐙','🦅','🐺','🦝','🐮','🦓','🦒','🐘',
+  // Human — medium-brown skin tone (Fitzpatrick 4)
+  '👧🏽','👦🏽','🧒🏽','👩🏽','👨🏽','🧑🏽',
+  // Human — medium-dark skin tone (Fitzpatrick 5)
+  '👧🏾','👦🏾','🧒🏾','👩🏾','👨🏾','🧑🏾',
+  // Human — light skin tone (Fitzpatrick 2)
+  '👧🏻','👦🏻','🧒🏻','👩🏻','👨🏻','🧑🏻',
+  // Fun / fantasy
+  '🧙','🦸','🧚','🧜','🧝','🤖','👾','🎃','🌟','⚡','🔥','🌈',
+];
+
+const THEMES = [
+  { id: 'green', label: 'Forest',   dot: '#16a34a', bg: '#0a0f0a' },
+  { id: 'gold',  label: 'Gold',     dot: '#d97706', bg: '#0d1117' },
+  { id: 'navy',  label: 'Coral',    dot: '#ea580c', bg: '#0a0e1a' },
+];
+
+// ─── Preset Tasks & Rewards (for parent "choose from list") ──────────────────
+
+const PRESET_TASKS = [
+  { title: 'Make Your Bed',            catHint: 'Daily Core Habits', points: 2, days: [0,1,2,3,4,5,6] },
+  { title: 'Brush Teeth (AM + PM)',    catHint: 'Daily Core Habits', points: 2, days: [0,1,2,3,4,5,6] },
+  { title: 'Clean Up After Yourself', catHint: 'Daily Core Habits', points: 2, days: [0,1,2,3,4,5,6] },
+  { title: 'Go Outside (30 mins)',     catHint: 'Daily Core Habits', points: 2, days: [0,1,2,3,4,5,6] },
+  { title: 'Help Empty the Dishwasher',catHint: 'Daily Core Habits', points: 2, days: [0,1,2,3,4,5,6] },
+  { title: 'Read (30 mins)',           catHint: 'Daily Knowledge',   points: 3, days: [0,1,2,3,4,5,6] },
+  { title: 'Math Practice (15 mins)', catHint: 'Daily Knowledge',   points: 3, days: [0,1,2,3,4,5,6] },
+  { title: "Qur'an (30 mins)",         catHint: 'Daily Knowledge',   points: 3, days: [0,1,2,3,4,5,6] },
+  { title: 'Practice Piano (15 mins)',catHint: 'Creative',           points: 2, days: [1,2,3,4,5] },
+  { title: 'Draw or Craft (20 mins)', catHint: 'Creative',           points: 2, days: [0,1,2,3,4,5,6] },
+  { title: 'Tidy Your Room',          catHint: 'By Parent Request',  points: 3, days: [0,1,2,3,4,5,6] },
+  { title: 'Take a Bath / Shower',    catHint: 'By Parent Request',  points: 2, days: [1,3,5] },
+  { title: "Fajr — 2 Rak'ahs",        catHint: 'Islam',              points: 2, days: [0,1,2,3,4,5,6] },
+  { title: "Dhuhr — 4 Rak'ahs",       catHint: 'Islam',              points: 2, days: [0,1,2,3,4,5,6] },
+  { title: "Asr — 4 Rak'ahs",         catHint: 'Islam',              points: 2, days: [0,1,2,3,4,5,6] },
+  { title: "Maghrib — 3 Rak'ahs",     catHint: 'Islam',              points: 2, days: [0,1,2,3,4,5,6] },
+  { title: "Isha — 4 Rak'ahs",        catHint: 'Islam',              points: 2, days: [0,1,2,3,4,5,6] },
+  { title: "Jum'ah (Friday) Prayer",  catHint: 'Islam',              points: 5, days: [5] },
+];
+
+const PRESET_REWARDS = [
+  { icon: '📱', title: '+1 Hr Screen Time', desc: 'Extra screen time today!',       cost: 10,  type: 'daily'  },
+  { icon: '⏭️', title: 'Skip a Task',        desc: 'Skip one task tomorrow.',        cost: 15,  type: 'daily'  },
+  { icon: '🍕', title: 'Pizza Night',        desc: 'Pick the dinner tonight!',       cost: 40,  type: 'weekly' },
+  { icon: '🎮', title: 'Video Game Hour',    desc: 'Extra gaming time!',             cost: 50,  type: 'weekly' },
+  { icon: '💵', title: '$5 In-App Purchase', desc: 'One approved in-app purchase.',  cost: 95,  type: 'weekly' },
+  { icon: '🎬', title: 'Movie Theater',      desc: 'A trip to the movies!',          cost: 120, type: 'weekly' },
+  { icon: '🔐', title: 'Escape Room',        desc: 'An escape room adventure!',      cost: 150, type: 'weekly' },
+  { icon: '🎳', title: 'Bowling Night',      desc: 'Family bowling outing!',         cost: 80,  type: 'weekly' },
+  { icon: '💡', title: 'Your Suggestion',    desc: 'Suggest a reward to Mom & Dad.', cost: 100, type: 'weekly' },
+];
+
+// ─── In-Memory Cache ─────────────────────────────────────────────────────────
+
+const _cache = { ledgers: {}, today: {}, week: {}, requests: {}, config: null };
+
+function invalidateKid(kidId) {
+  delete _cache.ledgers[kidId];
+  delete _cache.today[kidId];
+  delete _cache.week[kidId];
+  delete _cache.requests[kidId];
+}
 
 async function getConfig() {
   if (_cache.config) return _cache.config;
-  try {
-    _cache.config = await apiFetch('/api/config');
-  } catch (e) {
-    _cache.config = DEFAULT_CONFIG;
-  }
+  try { _cache.config = await apiFetch('/api/config'); }
+  catch (e) { _cache.config = DEFAULT_CONFIG; }
   PIN = _cache.config.pin || '1234';
   return _cache.config;
 }
 
 async function getLedger(kidId) {
   if (_cache.ledgers[kidId]) return _cache.ledgers[kidId];
-  try {
-    _cache.ledgers[kidId] = await apiFetch(`/api/ledger?kidId=${kidId}`);
-  } catch (e) {
-    _cache.ledgers[kidId] = [];
-  }
+  try { _cache.ledgers[kidId] = await apiFetch(`/api/ledger?kidId=${kidId}`); }
+  catch (e) { _cache.ledgers[kidId] = []; }
   return _cache.ledgers[kidId];
 }
 
-async function getToday(kidId) {
-  if (_cache.today[kidId]) return _cache.today[kidId];
-  try {
-    _cache.today[kidId] = await apiFetch(`/api/today?kidId=${kidId}`);
-  } catch (e) {
-    _cache.today[kidId] = { completedTaskIds: [], rewardIds: [] };
-  }
-  return _cache.today[kidId];
+async function getToday(kidId, date) {
+  const key = date || 'today';
+  const cacheKey = `${kidId}_${key}`;
+  if (_cache.today[cacheKey]) return _cache.today[cacheKey];
+  const dateParam = date ? `&date=${date}` : '';
+  try { _cache.today[cacheKey] = await apiFetch(`/api/today?kidId=${kidId}${dateParam}`); }
+  catch (e) { _cache.today[cacheKey] = { completedTaskIds: [], rewardIds: [] }; }
+  return _cache.today[cacheKey];
+}
+
+async function getWeek(kidId, weekStart) {
+  const cacheKey = `${kidId}_${weekStart}`;
+  if (_cache.week[cacheKey]) return _cache.week[cacheKey];
+  try { _cache.week[cacheKey] = await apiFetch(`/api/week?kidId=${kidId}&weekStart=${weekStart}`); }
+  catch (e) { _cache.week[cacheKey] = []; }
+  return _cache.week[cacheKey];
+}
+
+async function getRewardRequests(kidId) {
+  if (_cache.requests[kidId]) return _cache.requests[kidId];
+  try { _cache.requests[kidId] = await apiFetch(`/api/reward-requests?kidId=${kidId}`); }
+  catch (e) { _cache.requests[kidId] = []; }
+  return _cache.requests[kidId];
 }
 
 async function getBalance(kidId) {
   const ledger = await getLedger(kidId);
-  return ledger.reduce((sum, e) => sum + e.delta, 0);
+  return ledger.reduce((s, e) => s + e.delta, 0);
 }
 
-// ─── State ────────────────────────────────────────────────────────────────
+function getWeekStart(offsetWeeks = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() - d.getDay() + offsetWeeks * 7); // Sunday
+  return d.toISOString().slice(0, 10);
+}
 
-let cfg = DEFAULT_CONFIG; // will be replaced by API data on load
+function getWeekPoints(ledger, weekStart) {
+  const start = new Date(weekStart + 'T00:00:00Z').getTime();
+  const end = start + 7 * 86400000;
+  return ledger
+    .filter(e => e.type === 'earn' && e.ts >= start && e.ts < end)
+    .reduce((s, e) => s + e.delta, 0);
+}
+
+// ─── Theme Helper ────────────────────────────────────────────────────────────
+
+function applyTheme(themeId) {
+  document.documentElement.setAttribute('data-theme', themeId === 'green' ? '' : themeId);
+}
+
+// ─── State ───────────────────────────────────────────────────────────────────
+
+let cfg = DEFAULT_CONFIG;
 let activeKidId = null;
 let activeParentKidId = null;
 let pendingReward = null;
+let pendingUndoTask = null;
+let pendingAvatarKidId = null;
+let selectedAvatar = null;
+let selectedTheme = null;
+let historyDateOffset = 0; // 0 = today, -1 = yesterday, etc.
+let weekOffset = 0;
 let pinBuffer = '';
+let manageModalMode = null; // { type: 'category'|'task'|'reward', action: 'add'|'edit', item? }
 
-// ─── Routing ────────────────────────────────────────────────────────────────
+// ─── Routing ─────────────────────────────────────────────────────────────────
 
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(`view-${id}`).classList.add('active');
 }
 
-// ─── PIN Screen ────────────────────────────────────────────────────────────────
+// ─── PIN Screen ──────────────────────────────────────────────────────────────
 
 function updatePinDots() {
   for (let i = 0; i < 4; i++) {
@@ -1080,7 +1002,6 @@ async function handlePinKey(key) {
   pinBuffer += key;
   updatePinDots();
   if (pinBuffer.length === 4) {
-    // Validate against config PIN (loaded from API)
     const correctPin = cfg.pin || '1234';
     if (pinBuffer === correctPin) {
       PIN = correctPin;
@@ -1091,7 +1012,7 @@ async function handlePinKey(key) {
     } else {
       document.getElementById('pin-error').textContent = 'Incorrect PIN. Try again.';
       pinBuffer = '';
-      updatePinDots();
+      setTimeout(updatePinDots, 300);
     }
   }
 }
@@ -1100,48 +1021,54 @@ document.querySelectorAll('.pin-key').forEach(btn => {
   btn.addEventListener('click', () => handlePinKey(btn.dataset.key));
 });
 
-// ─── Profile Select ────────────────────────────────────────────────────────────────
+// ─── Profile Select ──────────────────────────────────────────────────────────
 
 async function renderProfiles() {
   cfg = await getConfig();
   const grid = document.getElementById('profiles-grid');
-  grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">Loading...</div>';
-  const balances = await Promise.all(cfg.kids.map(k => getBalance(k.id)));
+  grid.innerHTML = '<div style="color:var(--text-muted);padding:20px;font-size:13px">Loading…</div>';
+  const weekStart = getWeekStart();
+  const [balances, ledgers] = await Promise.all([
+    Promise.all(cfg.kids.map(k => getBalance(k.id))),
+    Promise.all(cfg.kids.map(k => getLedger(k.id))),
+  ]);
   grid.innerHTML = '';
   cfg.kids.forEach((kid, i) => {
+    const weekPts = getWeekPoints(ledgers[i], weekStart);
     const card = document.createElement('div');
     card.className = 'profile-card';
     card.innerHTML = `
       <div class="profile-avatar">${kid.avatar}</div>
       <div class="profile-name">${kid.name}</div>
       <div class="profile-points">⭐ ${balances[i]} pts</div>
+      <div class="profile-week-pts">📅 ${weekPts} this week</div>
     `;
     card.addEventListener('click', () => openKidDashboard(kid.id));
     grid.appendChild(card);
   });
 }
 
-document.getElementById('btn-parent-mode').addEventListener('click', () => {
-  openParentDashboard();
-});
+document.getElementById('btn-parent-mode').addEventListener('click', openParentDashboard);
 
-// ─── Kid Dashboard ────────────────────────────────────────────────────────────────
+// ─── Kid Dashboard ───────────────────────────────────────────────────────────
 
 async function openKidDashboard(kidId) {
   activeKidId = kidId;
-  // Invalidate caches for fresh data on each dashboard open
-  delete _cache.today[kidId];
-  delete _cache.ledgers[kidId];
+  invalidateKid(kidId);
+  weekOffset = 0;
+  historyDateOffset = 0;
 
   const kid = cfg.kids.find(k => k.id === kidId);
+  applyTheme(kid.theme || 'green');
+
   const today = new Date();
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   document.getElementById('kid-header-avatar').textContent = kid.avatar;
   document.getElementById('kid-header-name').textContent = kid.name;
   document.getElementById('kid-header-date').textContent =
-    `${days[today.getDay()]}, ${months[today.getMonth()]} ${today.getDate()}`;
+    `${DAYS[today.getDay()]}, ${MONTHS[today.getMonth()]} ${today.getDate()}`;
 
   // Reset tabs
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1151,11 +1078,12 @@ async function openKidDashboard(kidId) {
 
   showView('kid');
   await renderTasks();
-  await renderRewards();
-  await renderLedger();
+  // Pre-render other tabs in background
+  renderRewards();
 }
 
 document.getElementById('kid-back').addEventListener('click', async () => {
+  applyTheme('green');
   await renderProfiles();
   showView('profiles');
 });
@@ -1167,16 +1095,24 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
-    if (btn.dataset.tab === 'rewards') await renderRewards();
-    if (btn.dataset.tab === 'ledger') await renderLedger();
+    const tab = btn.dataset.tab;
+    if (tab === 'rewards')  await renderRewards();
+    if (tab === 'week')     await renderWeek();
+    if (tab === 'history')  await renderHistory();
   });
 });
 
+// Avatar tap
+document.getElementById('kid-header-avatar').addEventListener('click', () => {
+  openAvatarModal(activeKidId);
+});
+
+// ─── Today's Task List ───────────────────────────────────────────────────────
+
 function getTodayTasks() {
-  // Map Worker frequency field to day-of-week filter
-  const dow = new Date().getDay(); // 0=Sun, 5=Fri
+  const dow = new Date().getDay();
   return cfg.tasks.filter(t => {
-    if (t.days) return t.days.includes(dow); // legacy format
+    if (t.days) return t.days.includes(dow);
     const freq = t.frequency || 'daily';
     if (freq === 'daily') return true;
     if (freq === 'friday') return dow === 5;
@@ -1186,28 +1122,29 @@ function getTodayTasks() {
 }
 
 async function renderTasks() {
-  const todayData = await getToday(activeKidId);
+  const [todayData, ledger] = await Promise.all([
+    getToday(activeKidId),
+    getLedger(activeKidId),
+  ]);
   const completedIds = todayData.completedTaskIds || [];
   const todayTasks = getTodayTasks();
-  const balance = await getBalance(activeKidId);
+  const balance = ledger.reduce((s, e) => s + e.delta, 0);
+  const weekPts = getWeekPoints(ledger, getWeekStart());
 
   document.getElementById('kid-header-pts').textContent = balance;
+  document.getElementById('kid-header-week-pts').textContent = `${weekPts} this week`;
 
-  // Progress
   const done = todayTasks.filter(t => completedIds.includes(t.id)).length;
   const total = todayTasks.length;
   document.getElementById('progress-count').textContent = `${done} / ${total}`;
   document.getElementById('progress-fill').style.width = total ? `${(done/total)*100}%` : '0%';
 
-  // Group by category
   const list = document.getElementById('tasks-list');
   list.innerHTML = '';
 
   cfg.categories.forEach(cat => {
-    // Support both catId (legacy) and categoryId (Worker format)
     const catTasks = todayTasks.filter(t => (t.catId || t.categoryId) === cat.id);
     if (!catTasks.length) return;
-
     const catDone = catTasks.filter(t => completedIds.includes(t.id)).length;
     const allDone = catDone === catTasks.length;
 
@@ -1227,12 +1164,13 @@ async function renderTasks() {
       card.className = `task-card ${isDone ? 'done' : ''}`;
       card.innerHTML = `
         <div class="task-check"></div>
-        <div class="task-info">
-          <div class="task-title">${task.title}</div>
-        </div>
-        <div class="task-points">+${task.points}</div>
+        <div class="task-info"><div class="task-title">${task.title}</div></div>
+        <div class="task-points">${isDone ? '' : '+'}${task.points}</div>
       `;
-      if (!isDone) card.addEventListener('click', () => toggleTask(task));
+      card.addEventListener('click', () => {
+        if (isDone) openUndoModal(task);
+        else toggleTask(task);
+      });
       section.appendChild(card);
     });
 
@@ -1241,50 +1179,105 @@ async function renderTasks() {
 }
 
 async function toggleTask(task) {
-  // Optimistic UI update
-  const todayData = _cache.today[activeKidId] || { completedTaskIds: [], rewardIds: [] };
+  // Optimistic update
+  const cacheKey = `${activeKidId}_today`;
+  const todayData = _cache.today[cacheKey] || { completedTaskIds: [], rewardIds: [] };
   todayData.completedTaskIds.push(task.id);
-  _cache.today[activeKidId] = todayData;
-
-  // Optimistic ledger update
+  _cache.today[cacheKey] = todayData;
   if (!_cache.ledgers[activeKidId]) _cache.ledgers[activeKidId] = [];
-  _cache.ledgers[activeKidId].unshift({
-    id: `l${Date.now()}`, type: 'earn', taskId: task.id,
-    title: task.title, delta: task.points, ts: Date.now()
-  });
+  _cache.ledgers[activeKidId].unshift({ id: `l${Date.now()}`, type: 'earn', taskId: task.id, title: task.title, delta: task.points, ts: Date.now() });
 
   showToast(`⭐ +${task.points} pts — ${task.title}`);
   spawnConfetti();
   await renderTasks();
 
-  // Persist to API in background
   try {
     await apiFetch('/api/complete-task', {
       method: 'POST',
-      body: JSON.stringify({ kidId: activeKidId, taskId: task.id, taskTitle: task.title, points: task.points })
+      body: JSON.stringify({ kidId: activeKidId, taskId: task.id, taskTitle: task.title, points: task.points }),
     });
   } catch (e) {
     showToast('⚠️ Saved locally — will sync when online');
   }
 }
 
-// ─── Rewards ────────────────────────────────────────────────────────────────
+// ─── Undo Task ───────────────────────────────────────────────────────────────
+
+function openUndoModal(task) {
+  pendingUndoTask = task;
+  document.getElementById('undo-modal-desc').textContent =
+    `Remove "${task.title}" and take back ${task.points} pts?`;
+  document.getElementById('undo-modal').classList.add('open');
+}
+
+document.getElementById('undo-cancel').addEventListener('click', () => {
+  document.getElementById('undo-modal').classList.remove('open');
+  pendingUndoTask = null;
+});
+
+document.getElementById('undo-confirm').addEventListener('click', async () => {
+  if (!pendingUndoTask) return;
+  const task = pendingUndoTask;
+  pendingUndoTask = null;
+  document.getElementById('undo-modal').classList.remove('open');
+
+  // Optimistic update
+  const cacheKey = `${activeKidId}_today`;
+  const todayData = _cache.today[cacheKey] || { completedTaskIds: [] };
+  todayData.completedTaskIds = todayData.completedTaskIds.filter(id => id !== task.id);
+  _cache.today[cacheKey] = todayData;
+  if (_cache.ledgers[activeKidId]) {
+    const idx = _cache.ledgers[activeKidId].findIndex(e => e.taskId === task.id && e.type === 'earn');
+    if (idx !== -1) _cache.ledgers[activeKidId].splice(idx, 1);
+  }
+
+  showToast(`↩️ Undone: ${task.title}`);
+  await renderTasks();
+
+  try {
+    await apiFetch('/api/uncomplete-task', {
+      method: 'DELETE',
+      body: JSON.stringify({ kidId: activeKidId, taskId: task.id, points: task.points }),
+    });
+  } catch (e) {
+    showToast('⚠️ Could not sync undo');
+  }
+});
+
+// ─── Rewards ─────────────────────────────────────────────────────────────────
 
 async function renderRewards() {
-  const balance = await getBalance(activeKidId);
-  document.getElementById('rewards-balance').textContent = balance;
+  const [ledger, requests] = await Promise.all([
+    getLedger(activeKidId),
+    getRewardRequests(activeKidId),
+  ]);
+  const balance = ledger.reduce((s, e) => s + e.delta, 0);
+  const weekPts = getWeekPoints(ledger, getWeekStart());
 
-  const list = document.getElementById('rewards-list');
-  list.innerHTML = '';
+  document.getElementById('rewards-balance').textContent = balance;
+  document.getElementById('rewards-week-pts').textContent = `📅 ${weekPts} pts earned this week`;
+
+  const pendingRewardIds = requests.filter(r => r.status === 'pending').map(r => r.rewardId);
+
+  const dailyList = document.getElementById('rewards-list-daily');
+  const weeklyList = document.getElementById('rewards-list-weekly');
+  dailyList.innerHTML = '';
+  weeklyList.innerHTML = '';
 
   cfg.rewards.forEach(reward => {
     const canAfford = balance >= reward.cost;
+    const isPending = pendingRewardIds.includes(reward.id);
     const card = document.createElement('div');
-    card.className = `reward-card ${canAfford ? 'affordable' : 'locked'}`;
+    let cls = 'reward-card';
+    if (isPending) cls += ' requested';
+    else if (canAfford) cls += ' affordable';
+    else cls += ' locked';
+
+    card.className = cls;
     card.innerHTML = `
       <div class="reward-icon">${reward.icon}</div>
       <div class="reward-info">
-        <div class="reward-title">${reward.title}</div>
+        <div class="reward-title">${reward.title}${isPending ? ' <span style="color:var(--gold);font-size:11px">⏳ Requested</span>' : ''}</div>
         <div class="reward-desc">${reward.desc}</div>
       </div>
       <div class="reward-cost">
@@ -1292,18 +1285,31 @@ async function renderRewards() {
         <div class="reward-cost-label">pts</div>
       </div>
     `;
-    if (canAfford) {
-      card.addEventListener('click', () => openRewardModal(reward));
+    if (!isPending && (canAfford || reward.type === 'weekly')) {
+      card.addEventListener('click', () => openRewardModal(reward, balance));
     }
-    list.appendChild(card);
+    (reward.type === 'daily' ? dailyList : weeklyList).appendChild(card);
   });
 }
 
-function openRewardModal(reward) {
+function openRewardModal(reward, balance) {
   pendingReward = reward;
   document.getElementById('modal-reward-title').textContent = `${reward.icon} ${reward.title}`;
   document.getElementById('modal-reward-desc').textContent = reward.desc;
   document.getElementById('modal-reward-cost').textContent = reward.cost;
+  const typeNote = document.getElementById('modal-reward-type-note');
+  if (reward.type === 'weekly') {
+    if (balance < reward.cost) {
+      typeNote.textContent = `You need ${reward.cost - balance} more pts. Send a request to Mom & Dad?`;
+      document.getElementById('modal-confirm').textContent = 'Request 📨';
+    } else {
+      typeNote.textContent = 'Weekly reward — requires parent approval.';
+      document.getElementById('modal-confirm').textContent = 'Request 📨';
+    }
+  } else {
+    typeNote.textContent = '';
+    document.getElementById('modal-confirm').textContent = 'Redeem!';
+  }
   document.getElementById('reward-modal').classList.add('open');
 }
 
@@ -1314,86 +1320,287 @@ document.getElementById('modal-cancel').addEventListener('click', () => {
 
 document.getElementById('modal-confirm').addEventListener('click', async () => {
   if (!pendingReward) return;
-  const balance = await getBalance(activeKidId);
-  if (balance < pendingReward.cost) {
-    showToast('❌ Not enough points!');
-    document.getElementById('reward-modal').classList.remove('open');
-    return;
-  }
-
-  // Optimistic ledger update
-  if (!_cache.ledgers[activeKidId]) _cache.ledgers[activeKidId] = [];
-  _cache.ledgers[activeKidId].unshift({
-    id: `l${Date.now()}`, type: 'spend', rewardId: pendingReward.id,
-    title: pendingReward.title, delta: -pendingReward.cost, ts: Date.now()
-  });
-
   const reward = pendingReward;
   pendingReward = null;
   document.getElementById('reward-modal').classList.remove('open');
+
+  if (reward.type === 'weekly') {
+    // Send request to parent
+    try {
+      await apiFetch('/api/request-reward', {
+        method: 'POST',
+        body: JSON.stringify({ kidId: activeKidId, rewardId: reward.id, rewardTitle: reward.title, cost: reward.cost }),
+      });
+      delete _cache.requests[activeKidId];
+      showToast('📨 Request sent to Mom & Dad!');
+      spawnConfetti();
+      await renderRewards();
+    } catch (e) {
+      showToast('⚠️ Could not send request');
+    }
+    return;
+  }
+
+  // Daily reward — immediate redeem
+  const balance = await getBalance(activeKidId);
+  if (balance < reward.cost) { showToast('❌ Not enough points!'); return; }
+
+  if (!_cache.ledgers[activeKidId]) _cache.ledgers[activeKidId] = [];
+  _cache.ledgers[activeKidId].unshift({ id: `l${Date.now()}`, type: 'spend', rewardId: reward.id, title: reward.title, delta: -reward.cost, ts: Date.now() });
+
   showToast(`🎉 Redeemed: ${reward.title}!`);
-  spawnConfetti();
-  spawnConfetti();
+  spawnConfetti(); spawnConfetti();
   await renderRewards();
   document.getElementById('kid-header-pts').textContent = await getBalance(activeKidId);
 
-  // Persist to API in background
   try {
     await apiFetch('/api/redeem-reward', {
       method: 'POST',
-      body: JSON.stringify({ kidId: activeKidId, rewardId: reward.id, rewardTitle: reward.title, cost: reward.cost })
+      body: JSON.stringify({ kidId: activeKidId, rewardId: reward.id, rewardTitle: reward.title, cost: reward.cost }),
     });
   } catch (e) {
     showToast('⚠️ Saved locally — will sync when online');
   }
 });
 
-/// ─── Ledger ────────────────────────────────────────────────────────────────
+// ─── Weekly Progress ─────────────────────────────────────────────────────────
 
-async function renderLedger() {
-  const ledger = await getLedger(activeKidId);
+async function renderWeek() {
+  const weekStart = getWeekStart(weekOffset);
+  const [weekData, ledger] = await Promise.all([
+    getWeek(activeKidId, weekStart),
+    getLedger(activeKidId),
+  ]);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const weekTotalPts = weekData.reduce((s, d) => s + (d.pointsEarned || 0), 0);
+  const weekTasksDone = weekData.reduce((s, d) => s + (d.completedTaskIds || []).length, 0);
+
+  // Find highest weekly reward cost for goal bar
+  const weeklyRewards = cfg.rewards.filter(r => r.type === 'weekly').sort((a,b) => a.cost - b.cost);
+  const lowestWeeklyGoal = weeklyRewards[0]?.cost || 95;
+
+  const startDate = new Date(weekStart + 'T00:00:00Z');
+  const endDate = new Date(startDate); endDate.setUTCDate(endDate.getUTCDate() + 6);
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const weekLabel = `${MONTHS[startDate.getUTCMonth()]} ${startDate.getUTCDate()} – ${MONTHS[endDate.getUTCMonth()]} ${endDate.getUTCDate()}`;
+
+  const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  const container = document.getElementById('week-content');
+  container.innerHTML = `
+    <div class="week-nav">
+      <button class="week-nav-btn" id="week-prev">‹</button>
+      <div class="week-nav-label">${weekLabel}</div>
+      <button class="week-nav-btn" id="week-next" ${weekOffset >= 0 ? 'disabled style="opacity:0.4"' : ''}>›</button>
+    </div>
+    <div class="week-total-card">
+      <div class="week-total-item">
+        <div class="week-total-num">${weekTotalPts}</div>
+        <div class="week-total-label">Points</div>
+      </div>
+      <div class="week-total-item">
+        <div class="week-total-num">${weekTasksDone}</div>
+        <div class="week-total-label">Tasks Done</div>
+      </div>
+      <div class="week-total-item">
+        <div class="week-total-num">${weekData.filter(d => (d.pointsEarned||0) > 0).length}</div>
+        <div class="week-total-label">Active Days</div>
+      </div>
+    </div>
+    ${weekData.map(day => {
+      const d = new Date(day.date + 'T00:00:00Z');
+      const isToday = day.date === todayStr;
+      const taskCount = (day.completedTaskIds || []).length;
+      return `
+        <div class="week-day-row ${isToday ? 'today' : ''}">
+          <div class="week-day-name">${DAYS_SHORT[d.getUTCDay()]}</div>
+          <div class="week-day-date">${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}${isToday ? ' · Today' : ''}</div>
+          <div class="week-day-tasks">${taskCount} task${taskCount !== 1 ? 's' : ''}</div>
+          <div class="week-day-pts">${day.pointsEarned || 0} pts</div>
+        </div>
+      `;
+    }).join('')}
+    <div class="week-reward-goal">
+      <div class="week-reward-goal-title">🎯 Weekly Reward Goal — ${lowestWeeklyGoal} pts</div>
+      <div class="week-reward-goal-bar">
+        <div class="week-reward-goal-fill" style="width:${Math.min(100,(weekTotalPts/lowestWeeklyGoal)*100)}%"></div>
+      </div>
+      <div class="week-reward-goal-label">${weekTotalPts} / ${lowestWeeklyGoal} pts — ${weekTotalPts >= lowestWeeklyGoal ? '🎉 Goal reached! Request a reward.' : `${lowestWeeklyGoal - weekTotalPts} pts to go`}</div>
+    </div>
+  `;
+
+  document.getElementById('week-prev').addEventListener('click', async () => {
+    weekOffset--;
+    delete _cache.week[`${activeKidId}_${getWeekStart(weekOffset)}`];
+    await renderWeek();
+  });
+  const nextBtn = document.getElementById('week-next');
+  if (nextBtn && weekOffset < 0) {
+    nextBtn.addEventListener('click', async () => {
+      weekOffset++;
+      delete _cache.week[`${activeKidId}_${getWeekStart(weekOffset)}`];
+      await renderWeek();
+    });
+  }
+}
+
+// ─── History (Calendar Date Selector) ────────────────────────────────────────
+
+async function renderHistory() {
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() + historyDateOffset);
+  const dateStr = targetDate.toISOString().slice(0, 10);
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const isToday = historyDateOffset === 0;
+  const label = isToday ? 'Today' : `${DAYS[targetDate.getDay()]}, ${MONTHS[targetDate.getMonth()]} ${targetDate.getDate()}`;
+  document.getElementById('history-date-label').textContent = label;
+  document.getElementById('history-next').disabled = isToday;
+  document.getElementById('history-next').style.opacity = isToday ? '0.4' : '1';
+
+  const [todayData, ledger] = await Promise.all([
+    getToday(activeKidId, dateStr),
+    getLedger(activeKidId),
+  ]);
+
+  const dayStart = new Date(dateStr + 'T00:00:00Z').getTime();
+  const dayEnd = dayStart + 86400000;
+  const dayEntries = ledger.filter(e => e.ts >= dayStart && e.ts < dayEnd);
+
   const list = document.getElementById('ledger-list');
   list.innerHTML = '';
 
-  if (!ledger.length) {
-    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px 0;">No activity yet — complete some tasks!</div>';
+  if (!dayEntries.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px 0;">No activity on this day.</div>';
     return;
   }
 
-  ledger.forEach(entry => {
+  dayEntries.forEach(entry => {
     const isEarn = entry.delta > 0;
     const item = document.createElement('div');
     item.className = 'ledger-item';
-    const icon = isEarn ? (entry.type === 'earn' ? '✅' : '↩️') : '🎁';
-    const time = new Date(entry.ts).toLocaleString('en-US', {
-      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
-    });
+    const icon = isEarn ? '✅' : '🎁';
+    const time = new Date(entry.ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     item.innerHTML = `
       <div class="ledger-icon">${icon}</div>
       <div class="ledger-info">
         <div class="ledger-title">${entry.title}</div>
         <div class="ledger-time">${time}</div>
       </div>
-      <div class="ledger-delta ${isEarn ? 'earn' : 'spend'}">
-        ${isEarn ? '+' : ''}${entry.delta}
-      </div>
+      <div class="ledger-delta ${isEarn ? 'earn' : 'spend'}">${isEarn ? '+' : ''}${entry.delta}</div>
     `;
     list.appendChild(item);
   });
 }
 
-// ─── Parent Dashboard ────────────────────────────────────────────────────────────────
+document.getElementById('history-prev').addEventListener('click', async () => {
+  historyDateOffset--;
+  await renderHistory();
+});
+document.getElementById('history-next').addEventListener('click', async () => {
+  if (historyDateOffset >= 0) return;
+  historyDateOffset++;
+  await renderHistory();
+});
+
+// ─── Avatar Picker ────────────────────────────────────────────────────────────
+
+function openAvatarModal(kidId) {
+  pendingAvatarKidId = kidId;
+  const kid = cfg.kids.find(k => k.id === kidId);
+  selectedAvatar = kid.avatar;
+  selectedTheme = kid.theme || 'green';
+
+  const grid = document.getElementById('avatar-grid');
+  grid.innerHTML = '';
+  AVATARS.forEach(emoji => {
+    const btn = document.createElement('div');
+    btn.className = `avatar-option ${emoji === selectedAvatar ? 'selected' : ''}`;
+    btn.textContent = emoji;
+    btn.addEventListener('click', () => {
+      grid.querySelectorAll('.avatar-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedAvatar = emoji;
+    });
+    grid.appendChild(btn);
+  });
+
+  const picker = document.getElementById('theme-picker');
+  picker.innerHTML = '';
+  THEMES.forEach(t => {
+    const sw = document.createElement('div');
+    sw.className = `theme-swatch ${t.id === selectedTheme ? 'active' : ''}`;
+    sw.style.background = t.bg;
+    sw.innerHTML = `<div class="theme-swatch-dot" style="background:${t.dot}"></div>${t.label}`;
+    sw.addEventListener('click', () => {
+      picker.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      selectedTheme = t.id;
+      applyTheme(t.id);
+    });
+    picker.appendChild(sw);
+  });
+
+  document.getElementById('avatar-modal').classList.add('open');
+}
+
+document.getElementById('avatar-cancel').addEventListener('click', () => {
+  document.getElementById('avatar-modal').classList.remove('open');
+  // Revert theme preview
+  const kid = cfg.kids.find(k => k.id === pendingAvatarKidId);
+  if (kid) applyTheme(kid.theme || 'green');
+  pendingAvatarKidId = null;
+});
+
+document.getElementById('avatar-save').addEventListener('click', async () => {
+  if (!pendingAvatarKidId) return;
+  const kid = cfg.kids.find(k => k.id === pendingAvatarKidId);
+  kid.avatar = selectedAvatar;
+  kid.theme = selectedTheme;
+  document.getElementById('avatar-modal').classList.remove('open');
+  document.getElementById('kid-header-avatar').textContent = selectedAvatar;
+  applyTheme(selectedTheme);
+  showToast('✅ Avatar & theme saved!');
+  pendingAvatarKidId = null;
+
+  // Persist config
+  try {
+    _cache.config = cfg;
+    await apiFetch('/api/config', { method: 'PUT', body: JSON.stringify(cfg) });
+  } catch (e) {
+    showToast('⚠️ Could not save to cloud');
+  }
+});
+
+// ─── Parent Dashboard ─────────────────────────────────────────────────────────
+
 async function openParentDashboard() {
   activeParentKidId = cfg.kids[0].id;
   renderParentKidTabs();
+  renderParentTabBar();
   showView('parent');
-  await renderParentContent();
+  await renderParentOverview();
 }
 
 document.getElementById('parent-back').addEventListener('click', async () => {
+  applyTheme('green');
   await renderProfiles();
   showView('profiles');
 });
+
+function renderParentTabBar() {
+  document.querySelectorAll('.parent-tab-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      document.querySelectorAll('.parent-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.ptab;
+      document.getElementById('parent-overview-panel').style.display = tab === 'overview' ? '' : 'none';
+      document.getElementById('parent-manage-panel').style.display = tab === 'manage' ? '' : 'none';
+      if (tab === 'manage') await renderParentManage();
+    });
+  });
+}
 
 function renderParentKidTabs() {
   const tabs = document.getElementById('parent-kid-tabs');
@@ -1405,26 +1612,29 @@ function renderParentKidTabs() {
     btn.addEventListener('click', async () => {
       activeParentKidId = kid.id;
       renderParentKidTabs();
-      await renderParentContent();
+      const activeTab = document.querySelector('.parent-tab-btn.active')?.dataset.ptab;
+      if (activeTab === 'overview') await renderParentOverview();
+      else await renderParentManage();
     });
     tabs.appendChild(btn);
   });
 }
 
-async function renderParentContent() {
+async function renderParentOverview() {
+  invalidateKid(activeParentKidId);
   const kid = cfg.kids.find(k => k.id === activeParentKidId);
-  const [balance, ledger, todayData] = await Promise.all([
-    getBalance(activeParentKidId),
+  const weekStart = getWeekStart();
+  const [ledger, todayData, requests] = await Promise.all([
     getLedger(activeParentKidId),
-    getToday(activeParentKidId)
+    getToday(activeParentKidId),
+    getRewardRequests(activeParentKidId),
   ]);
+  const balance = ledger.reduce((s, e) => s + e.delta, 0);
+  const weekPts = getWeekPoints(ledger, weekStart);
   const todayTasks = getTodayTasks();
   const completedIds = todayData.completedTaskIds || [];
-  const doneTodayCount = todayTasks.filter(t => completedIds.includes(t.id)).length;
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const earnedToday = ledger
-    .filter(e => e.type === 'earn' && new Date(e.ts).toISOString().slice(0,10) === todayStr)
-    .reduce((s, e) => s + e.delta, 0);
+  const doneTodayCount = completedIds.length;
+  const pendingRequests = requests.filter(r => r.status === 'pending');
 
   const content = document.getElementById('parent-content');
   content.innerHTML = `
@@ -1434,48 +1644,394 @@ async function renderParentContent() {
         <div class="parent-stat-label">Total Points</div>
       </div>
       <div class="parent-stat">
-        <div class="parent-stat-num">${doneTodayCount}</div>
-        <div class="parent-stat-label">Tasks Today</div>
+        <div class="parent-stat-num">${weekPts}</div>
+        <div class="parent-stat-label">This Week</div>
       </div>
       <div class="parent-stat">
-        <div class="parent-stat-num">${earnedToday}</div>
-        <div class="parent-stat-label">Pts Earned Today</div>
+        <div class="parent-stat-num">${doneTodayCount}</div>
+        <div class="parent-stat-label">Tasks Today</div>
       </div>
       <div class="parent-stat">
         <div class="parent-stat-num">${ledger.filter(e=>e.type==='spend').length}</div>
         <div class="parent-stat-label">Rewards Redeemed</div>
       </div>
     </div>
-    <div class="parent-week-title">Recent Activity</div>
-    <div id="parent-ledger-list"></div>
   `;
 
-  const pList = document.getElementById('parent-ledger-list');
-  if (!ledger.length) {
-    pList.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px 0;">No activity yet.</div>';
-    return;
+  // Pending reward requests
+  if (pendingRequests.length) {
+    const reqSection = document.createElement('div');
+    reqSection.innerHTML = `<div class="section-title">⏳ Reward Requests${pendingRequests.length ? `<span class="notif-badge">${pendingRequests.length}</span>` : ''}</div>`;
+    pendingRequests.forEach(req => {
+      const row = document.createElement('div');
+      row.className = 'request-row';
+      row.innerHTML = `
+        <div class="request-row-info">
+          <div class="request-row-title">${req.rewardTitle}</div>
+          <div class="request-row-cost">⭐ ${req.cost} pts${req.note ? ` · "${req.note}"` : ''}</div>
+        </div>
+        <button class="approve-btn" data-id="${req.id}">✓ Approve</button>
+        <button class="deny-btn" data-id="${req.id}">✗ Deny</button>
+      `;
+      row.querySelector('.approve-btn').addEventListener('click', async () => {
+        try {
+          await apiFetch('/api/approve-reward', { method: 'POST', body: JSON.stringify({ kidId: activeParentKidId, requestId: req.id }) });
+          invalidateKid(activeParentKidId);
+          showToast(`✅ Approved: ${req.rewardTitle}`);
+          await renderParentOverview();
+        } catch (e) { showToast('⚠️ Could not approve'); }
+      });
+      row.querySelector('.deny-btn').addEventListener('click', async () => {
+        try {
+          await apiFetch('/api/deny-reward', { method: 'POST', body: JSON.stringify({ kidId: activeParentKidId, requestId: req.id }) });
+          invalidateKid(activeParentKidId);
+          showToast(`❌ Denied: ${req.rewardTitle}`);
+          await renderParentOverview();
+        } catch (e) { showToast('⚠️ Could not deny'); }
+      });
+      reqSection.appendChild(row);
+    });
+    content.appendChild(reqSection);
   }
 
-  ledger.slice(0, 20).forEach(entry => {
-    const isEarn = entry.delta > 0;
-    const item = document.createElement('div');
-    item.className = 'ledger-item';
-    const icon = isEarn ? (entry.type === 'earn' ? '✅' : '↩️') : '🎁';
-    const time = new Date(entry.ts).toLocaleString('en-US', {
-      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+  // Today's completed tasks (with revoke)
+  const revokeSection = document.createElement('div');
+  revokeSection.innerHTML = `<div class="section-title">Today's Completed Tasks</div>`;
+  if (!completedIds.length) {
+    revokeSection.innerHTML += '<div style="font-size:13px;color:var(--text-muted);padding:8px 0;">No tasks completed yet today.</div>';
+  } else {
+    completedIds.forEach(taskId => {
+      const task = cfg.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      const row = document.createElement('div');
+      row.className = 'revoke-row';
+      row.innerHTML = `
+        <div class="revoke-row-info">
+          <div class="revoke-row-title">${task.title}</div>
+          <div class="revoke-row-pts">+${task.points} pts</div>
+        </div>
+        <button class="revoke-btn" data-taskid="${task.id}">Revoke</button>
+      `;
+      row.querySelector('.revoke-btn').addEventListener('click', async () => {
+        try {
+          await apiFetch('/api/uncomplete-task', {
+            method: 'DELETE',
+            body: JSON.stringify({ kidId: activeParentKidId, taskId: task.id, points: task.points }),
+          });
+          invalidateKid(activeParentKidId);
+          showToast(`↩️ Revoked: ${task.title}`);
+          await renderParentOverview();
+        } catch (e) { showToast('⚠️ Could not revoke'); }
+      });
+      revokeSection.appendChild(row);
     });
+  }
+  content.appendChild(revokeSection);
+
+  // Recent activity
+  const actSection = document.createElement('div');
+  actSection.innerHTML = `<div class="section-title">Recent Activity</div>`;
+  if (!ledger.length) {
+    actSection.innerHTML += '<div style="font-size:13px;color:var(--text-muted);padding:8px 0;">No activity yet.</div>';
+  } else {
+    ledger.slice(0, 15).forEach(entry => {
+      const isEarn = entry.delta > 0;
+      const item = document.createElement('div');
+      item.className = 'ledger-item';
+      const time = new Date(entry.ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      item.innerHTML = `
+        <div class="ledger-icon">${isEarn ? '✅' : '🎁'}</div>
+        <div class="ledger-info">
+          <div class="ledger-title">${entry.title}</div>
+          <div class="ledger-time">${time}</div>
+        </div>
+        <div class="ledger-delta ${isEarn ? 'earn' : 'spend'}">${isEarn ? '+' : ''}${entry.delta}</div>
+      `;
+      actSection.appendChild(item);
+    });
+  }
+  content.appendChild(actSection);
+}
+
+// ─── Parent Manage Panel ──────────────────────────────────────────────────────
+
+async function renderParentManage() {
+  const container = document.getElementById('parent-manage-content');
+  container.innerHTML = '';
+
+  // ── Categories ──
+  const catSection = document.createElement('div');
+  catSection.className = 'manage-section';
+  catSection.innerHTML = '<div class="section-title">Categories</div>';
+  cfg.categories.forEach(cat => {
+    const item = document.createElement('div');
+    item.className = 'manage-item';
     item.innerHTML = `
-      <div class="ledger-icon">${icon}</div>
-      <div class="ledger-info">
-        <div class="ledger-title">${entry.title}</div>
-        <div class="ledger-time">${time}</div>
+      <div class="manage-item-info">
+        <div class="manage-item-title">${cat.icon} ${cat.name}</div>
       </div>
-      <div class="ledger-delta ${isEarn ? 'earn' : 'spend'}">
-        ${isEarn ? '+' : ''}${entry.delta}
+      <button class="manage-edit-btn" data-type="category" data-id="${cat.id}">Edit</button>
+      <button class="manage-delete-btn" data-type="category" data-id="${cat.id}">✕</button>
+    `;
+    catSection.appendChild(item);
+  });
+  const addCatBtn = document.createElement('button');
+  addCatBtn.className = 'add-btn';
+  addCatBtn.innerHTML = '+ Add Category';
+  addCatBtn.addEventListener('click', () => openManageModal('category', 'add'));
+  catSection.appendChild(addCatBtn);
+  container.appendChild(catSection);
+
+  // ── Tasks ──
+  const taskSection = document.createElement('div');
+  taskSection.className = 'manage-section';
+  taskSection.innerHTML = '<div class="section-title">Tasks</div>';
+  cfg.tasks.forEach(task => {
+    const cat = cfg.categories.find(c => c.id === (task.catId || task.categoryId));
+    const item = document.createElement('div');
+    item.className = 'manage-item';
+    item.innerHTML = `
+      <div class="manage-item-info">
+        <div class="manage-item-title">${task.title}</div>
+        <div class="manage-item-sub">${cat ? cat.icon + ' ' + cat.name : ''} · ${task.points} pts</div>
+      </div>
+      <button class="manage-edit-btn" data-type="task" data-id="${task.id}">Edit</button>
+      <button class="manage-delete-btn" data-type="task" data-id="${task.id}">✕</button>
+    `;
+    taskSection.appendChild(item);
+  });
+  const addTaskBtn = document.createElement('button');
+  addTaskBtn.className = 'add-btn';
+  addTaskBtn.innerHTML = '+ Add Task';
+  addTaskBtn.addEventListener('click', () => openManageModal('task', 'add'));
+  taskSection.appendChild(addTaskBtn);
+  container.appendChild(taskSection);
+
+  // ── Rewards ──
+  const rewardSection = document.createElement('div');
+  rewardSection.className = 'manage-section';
+  rewardSection.innerHTML = '<div class="section-title">Rewards</div>';
+  cfg.rewards.forEach(reward => {
+    const item = document.createElement('div');
+    item.className = 'manage-item';
+    item.innerHTML = `
+      <div class="manage-item-info">
+        <div class="manage-item-title">${reward.icon} ${reward.title}</div>
+        <div class="manage-item-sub">${reward.cost} pts · ${reward.type}</div>
+      </div>
+      <button class="manage-edit-btn" data-type="reward" data-id="${reward.id}">Edit</button>
+      <button class="manage-delete-btn" data-type="reward" data-id="${reward.id}">✕</button>
+    `;
+    rewardSection.appendChild(item);
+  });
+  const addRewardBtn = document.createElement('button');
+  addRewardBtn.className = 'add-btn';
+  addRewardBtn.innerHTML = '+ Add Reward';
+  addRewardBtn.addEventListener('click', () => openManageModal('reward', 'add'));
+  rewardSection.appendChild(addRewardBtn);
+  container.appendChild(rewardSection);
+
+  // Wire up edit/delete buttons
+  container.querySelectorAll('.manage-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const { type, id } = btn.dataset;
+      const item = type === 'category' ? cfg.categories.find(c => c.id === id)
+                 : type === 'task'     ? cfg.tasks.find(t => t.id === id)
+                 : cfg.rewards.find(r => r.id === id);
+      openManageModal(type, 'edit', item);
+    });
+  });
+  container.querySelectorAll('.manage-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { type, id } = btn.dataset;
+      if (type === 'category') cfg.categories = cfg.categories.filter(c => c.id !== id);
+      else if (type === 'task') cfg.tasks = cfg.tasks.filter(t => t.id !== id);
+      else if (type === 'reward') cfg.rewards = cfg.rewards.filter(r => r.id !== id);
+      await saveConfig();
+      await renderParentManage();
+    });
+  });
+}
+
+// ─── Manage Modal ─────────────────────────────────────────────────────────────
+
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function openManageModal(type, action, item = null) {
+  manageModalMode = { type, action, item };
+  const title = `${action === 'add' ? 'Add' : 'Edit'} ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+  document.getElementById('manage-modal-title').textContent = title;
+
+  const body = document.getElementById('manage-modal-body');
+  body.innerHTML = '';
+
+  if (type === 'category') {
+    body.innerHTML = `
+      <div class="form-field">
+        <label class="form-label">Icon (emoji)</label>
+        <input class="form-input" id="mf-icon" value="${item?.icon || ''}" placeholder="🏠" maxlength="4" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">Category Name</label>
+        <input class="form-input" id="mf-name" value="${item?.name || ''}" placeholder="e.g. Daily Core Habits" />
       </div>
     `;
-    pList.appendChild(item);
-  });
+  } else if (type === 'task') {
+    const catOptions = cfg.categories.map(c => `<option value="${c.id}" ${(item?.catId || item?.categoryId) === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('');
+    const selectedDays = item?.days || [0,1,2,3,4,5,6];
+    body.innerHTML = `
+      <div class="form-field">
+        <label class="form-label">Task Name</label>
+        <input class="form-input" id="mf-title" value="${item?.title || ''}" placeholder="e.g. Make Your Bed" />
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="mf-cat">${catOptions}</select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Points</label>
+          <input class="form-input" id="mf-pts" type="number" min="1" max="20" value="${item?.points || 2}" />
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Days</label>
+        <div class="day-picker" id="mf-days">
+          ${DAY_NAMES.map((d, i) => `<div class="day-chip ${selectedDays.includes(i) ? 'active' : ''}" data-day="${i}">${d}</div>`).join('')}
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Or choose from presets</label>
+        <div class="preset-list" id="preset-tasks-list">
+          ${PRESET_TASKS.map(p => `<div class="preset-item" data-preset='${JSON.stringify(p)}'><div class="preset-item-title">${p.title}</div><div class="preset-item-sub">${p.catHint} · ${p.points} pts</div></div>`).join('')}
+        </div>
+      </div>
+    `;
+    body.querySelectorAll('.day-chip').forEach(chip => {
+      chip.addEventListener('click', () => chip.classList.toggle('active'));
+    });
+    body.querySelectorAll('.preset-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const p = JSON.parse(item.dataset.preset);
+        document.getElementById('mf-title').value = p.title;
+        document.getElementById('mf-pts').value = p.points;
+        // Match category by name hint
+        const cat = cfg.categories.find(c => c.name.toLowerCase().includes(p.catHint.toLowerCase().split(' ')[0]));
+        if (cat) document.getElementById('mf-cat').value = cat.id;
+        body.querySelectorAll('.day-chip').forEach(chip => {
+          chip.classList.toggle('active', p.days.includes(parseInt(chip.dataset.day)));
+        });
+      });
+    });
+  } else if (type === 'reward') {
+    body.innerHTML = `
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Icon</label>
+          <input class="form-input" id="mf-icon" value="${item?.icon || ''}" placeholder="🎁" maxlength="4" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Type</label>
+          <select class="form-select" id="mf-type">
+            <option value="daily" ${item?.type === 'daily' ? 'selected' : ''}>Daily</option>
+            <option value="weekly" ${item?.type === 'weekly' || !item ? 'selected' : ''}>Weekly</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Reward Title</label>
+        <input class="form-input" id="mf-title" value="${item?.title || ''}" placeholder="e.g. Movie Night" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">Description</label>
+        <input class="form-input" id="mf-desc" value="${item?.desc || ''}" placeholder="Short description" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">Cost (points)</label>
+        <input class="form-input" id="mf-pts" type="number" min="1" value="${item?.cost || 50}" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">Or choose from presets</label>
+        <div class="preset-list">
+          ${PRESET_REWARDS.map(p => `<div class="preset-item" data-preset='${JSON.stringify(p)}'><div class="preset-item-title">${p.icon} ${p.title}</div><div class="preset-item-sub">${p.cost} pts · ${p.type}</div></div>`).join('')}
+        </div>
+      </div>
+    `;
+    body.querySelectorAll('.preset-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const p = JSON.parse(el.dataset.preset);
+        document.getElementById('mf-icon').value = p.icon;
+        document.getElementById('mf-title').value = p.title;
+        document.getElementById('mf-desc').value = p.desc;
+        document.getElementById('mf-pts').value = p.cost;
+        document.getElementById('mf-type').value = p.type;
+      });
+    });
+  }
+
+  document.getElementById('manage-modal').classList.add('open');
+}
+
+document.getElementById('manage-cancel').addEventListener('click', () => {
+  document.getElementById('manage-modal').classList.remove('open');
+  manageModalMode = null;
+});
+
+document.getElementById('manage-save').addEventListener('click', async () => {
+  if (!manageModalMode) return;
+  const { type, action, item } = manageModalMode;
+
+  if (type === 'category') {
+    const icon = document.getElementById('mf-icon').value.trim();
+    const name = document.getElementById('mf-name').value.trim();
+    if (!name) { showToast('⚠️ Name is required'); return; }
+    if (action === 'add') {
+      cfg.categories.push({ id: `c${Date.now()}`, icon: icon || '📌', name });
+    } else {
+      const c = cfg.categories.find(c => c.id === item.id);
+      if (c) { c.icon = icon || c.icon; c.name = name; }
+    }
+  } else if (type === 'task') {
+    const title = document.getElementById('mf-title').value.trim();
+    const catId = document.getElementById('mf-cat').value;
+    const points = parseInt(document.getElementById('mf-pts').value) || 2;
+    const days = [...document.querySelectorAll('.day-chip.active')].map(c => parseInt(c.dataset.day));
+    if (!title) { showToast('⚠️ Task name is required'); return; }
+    if (action === 'add') {
+      cfg.tasks.push({ id: `t${Date.now()}`, catId, title, points, days });
+    } else {
+      const t = cfg.tasks.find(t => t.id === item.id);
+      if (t) { t.title = title; t.catId = catId; t.points = points; t.days = days; }
+    }
+  } else if (type === 'reward') {
+    const icon = document.getElementById('mf-icon').value.trim();
+    const title = document.getElementById('mf-title').value.trim();
+    const desc = document.getElementById('mf-desc').value.trim();
+    const cost = parseInt(document.getElementById('mf-pts').value) || 50;
+    const rewardType = document.getElementById('mf-type').value;
+    if (!title) { showToast('⚠️ Title is required'); return; }
+    if (action === 'add') {
+      cfg.rewards.push({ id: `r${Date.now()}`, icon: icon || '🎁', title, desc, cost, type: rewardType });
+    } else {
+      const r = cfg.rewards.find(r => r.id === item.id);
+      if (r) { r.icon = icon || r.icon; r.title = title; r.desc = desc; r.cost = cost; r.type = rewardType; }
+    }
+  }
+
+  document.getElementById('manage-modal').classList.remove('open');
+  manageModalMode = null;
+  await saveConfig();
+  await renderParentManage();
+  showToast('✅ Saved!');
+});
+
+async function saveConfig() {
+  _cache.config = cfg;
+  try {
+    await apiFetch('/api/config', { method: 'PUT', body: JSON.stringify(cfg) });
+  } catch (e) {
+    showToast('⚠️ Could not save to cloud');
+  }
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -1486,33 +2042,30 @@ function showToast(msg) {
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
 }
 
 // ─── Confetti ─────────────────────────────────────────────────────────────────
 
 function spawnConfetti() {
-  const colors = ['#a855f7','#f59e0b','#10b981','#3b82f6','#ef4444','#f472b6'];
+  const colors = ['#16a34a','#f59e0b','#22c55e','#3b82f6','#ef4444','#f472b6','#a855f7'];
   for (let i = 0; i < 18; i++) {
     const el = document.createElement('div');
     el.className = 'confetti-piece';
     el.style.cssText = `
-      left: ${Math.random() * 100}vw;
-      top: -10px;
-      background: ${colors[Math.floor(Math.random()*colors.length)]};
-      animation-delay: ${Math.random() * 0.4}s;
-      animation-duration: ${0.9 + Math.random() * 0.6}s;
-      width: ${6 + Math.random()*8}px;
-      height: ${6 + Math.random()*8}px;
+      left:${Math.random()*100}vw;top:-10px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-delay:${Math.random()*0.4}s;
+      animation-duration:${0.9+Math.random()*0.6}s;
+      width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;
     `;
     document.body.appendChild(el);
     el.addEventListener('animationend', () => el.remove());
   }
 }
 
-// ─── App Init ────────────────────────────────────────────────────────────────
+// ─── App Init ─────────────────────────────────────────────────────────────────
 
-// Pre-load config so PIN validation works immediately
 (async () => {
   try {
     cfg = await getConfig();
@@ -1522,7 +2075,7 @@ function spawnConfetti() {
   }
 })();
 
-// ─── Service Worker + Auto-Update ───────────────────────────────────────────────────────────────
+// ─── Service Worker + Auto-Update ────────────────────────────────────────────
 
 let swReg = null;
 
@@ -1530,16 +2083,10 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
       swReg = await navigator.serviceWorker.register('sw.js');
-
-      // Poll for updates every 60 seconds
       setInterval(() => swReg.update(), 60000);
-
-      // Listen for SW_UPDATED broadcast from the service worker
       navigator.serviceWorker.addEventListener('message', e => {
         if (e.data && e.data.type === 'SW_UPDATED') {
-          const banner = document.getElementById('update-banner');
-          banner.classList.add('show');
-          // Reload after 2 seconds so the user can see the banner
+          document.getElementById('update-banner').classList.add('show');
           setTimeout(() => window.location.reload(), 2000);
         }
       });
@@ -1549,14 +2096,9 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Manual “Check for Update” button
 document.getElementById('btn-check-update').addEventListener('click', async () => {
-  if (swReg) {
-    showToast('🔄 Checking for updates…');
-    await swReg.update();
-  } else {
-    showToast('⚠️ Service worker not available');
-  }
+  if (swReg) { showToast('🔄 Checking for updates…'); await swReg.update(); }
+  else showToast('⚠️ Service worker not available');
 });
 </script>
 </body>

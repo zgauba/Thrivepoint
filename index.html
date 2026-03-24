@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#0a0f0a" />
   <title>Thrivepoint</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <style>
     /* ─── Reset ─────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -160,7 +160,7 @@
     }
     .kid-header-pts-num { font-size: 18px; font-weight: 800; line-height: 1; color: #fff; }
     .kid-header-pts-label { font-size: 9px; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 0.5px; }
-    .kid-header-week-pts { font-size: 11px; color: var(--text-muted); text-align: right; }
+    .kid-header-week-pts { font-size: 11px; color: var(--text-muted); text-align: center; width: 100%; }
 
     /* ─── Tab Bar ───────────────────────────────────────────── */
     .tab-bar {
@@ -370,8 +370,8 @@
     .parent-header-title { font-size: 17px; font-weight: 700; flex: 1; }
     .back-btn {
       background: none; border: none; color: var(--accent2);
-      font-size: 15px; cursor: pointer; padding: 4px;
-      -webkit-tap-highlight-color: transparent;
+      font-size: 22px; cursor: pointer; padding: 4px 8px 4px 0;
+      -webkit-tap-highlight-color: transparent; display: flex; align-items: center;
     }
     .parent-tab-bar {
       display: flex; background: var(--surface);
@@ -505,6 +505,16 @@
     .preset-item-title { font-weight: 600; }
     .preset-item-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
+    /* ─── Kid Chip (per-kid task assignment) ─────────────────── */
+    .kid-chip {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 99px; padding: 5px 12px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent; display: inline-flex; align-items: center; gap: 5px;
+    }
+    .kid-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .kid-chip-all { border-style: dashed; }
+
     /* ─── Toast ─────────────────────────────────────────────── */
     #toast {
       position: fixed; bottom: calc(var(--safe-bot) + 24px);
@@ -570,15 +580,16 @@
     #update-banner.show { display: block; }
     @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 
-    /* ─── Modal Close Button ───────────────────────────────── */
+    /* ─── Modal Close Button (fixed so it floats above scrolling content) ── */
     .modal-close-btn {
-      position: absolute; top: 14px; right: 14px;
-      width: 32px; height: 32px; border-radius: 50%;
+      position: fixed;
+      width: 36px; height: 36px; border-radius: 50%;
       background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text-muted); font-size: 16px; line-height: 1;
+      color: var(--text-muted); font-size: 18px; line-height: 1;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; transition: background 0.15s, color 0.15s;
-      -webkit-tap-highlight-color: transparent; z-index: 10;
+      -webkit-tap-highlight-color: transparent; z-index: 200;
+      /* Positioned via JS after modal opens */
     }
     .modal-close-btn:hover { background: var(--border); color: var(--text); }
     .modal-sheet { position: relative; }
@@ -638,7 +649,7 @@
   <!-- ── Kid Dashboard ──────────────────────────────────────── -->
   <div id="view-kid" class="view">
     <div class="kid-header">
-      <button class="back-btn" id="kid-back">← Back</button>
+      <button class="back-btn" id="kid-back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div class="kid-header-avatar" id="kid-header-avatar" title="Tap to change avatar"></div>
       <div class="kid-header-info">
         <div class="kid-header-name" id="kid-header-name"></div>
@@ -700,7 +711,7 @@
   <!-- ── Parent Dashboard ───────────────────────────────────── -->
   <div id="view-parent" class="view">
     <div class="parent-header">
-      <button class="back-btn" id="parent-back">← Back</button>
+      <button class="back-btn" id="parent-back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div class="parent-header-title">🔐 Parent View</div>
     </div>
     <div class="parent-tab-bar">
@@ -781,8 +792,32 @@
     </div>
   </div>
 </div>
+<!-- ── Kid Edit Modal ───────────────────────────────────────── -->
+<div class="modal-overlay" id="kid-edit-modal">
+  <div class="modal-sheet" style="max-height:85vh;overflow-y:auto">
+    <button class="modal-close-btn" id="kid-edit-modal-close">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="kid-edit-modal-title">Add Kid</div>
+    <div class="form-field">
+      <label class="form-label">Name</label>
+      <input class="form-input" id="kef-name" placeholder="e.g. Noor" />
+    </div>
+    <div class="form-field">
+      <label class="form-label">Avatar</label>
+      <div class="avatar-grid" id="kef-avatar-grid"></div>
+    </div>
+    <div class="form-field" style="margin-top:14px">
+      <label class="form-label">Theme</label>
+      <div class="theme-picker" id="kef-theme-picker"></div>
+    </div>
+    <div class="modal-actions" style="margin-top:18px">
+      <button class="btn btn-secondary" id="kid-edit-cancel">Cancel</button>
+      <button class="btn btn-primary" id="kid-edit-save">Save</button>
+    </div>
+  </div>
+</div>
 
-<!-- ── Toast ──────────────────────────────────────────────── -->
+<!-- ── Toast ──────────────────────────────────────────────────────── -->
 <div id="toast"></div>
 
 <script>
@@ -803,7 +838,8 @@ async function apiFetch(path, options = {}) {
 // ─── Default Config ──────────────────────────────────────────────────────────
 
 const DEFAULT_CONFIG = {
-  pin: '1234',
+  pin: '4320',
+  parentPin: '1379',
   kids: [
     { id: 'k1', name: 'Noor',  avatar: '👧🏽', theme: 'green' },
     { id: 'k2', name: 'Shaan', avatar: '👦🏽', theme: 'navy'  },
@@ -816,22 +852,22 @@ const DEFAULT_CONFIG = {
     { id: 'c5', name: 'Islam',             icon: '🕌' },
   ],
   tasks: [
-    { id: 't01', catId: 'c1', title: 'Make Your Bed',              points: 2, days: [0,1,2,3,4,5,6] },
-    { id: 't02', catId: 'c1', title: 'Help Empty the Dishwasher',  points: 2, days: [0,1,2,3,4,5,6] },
-    { id: 't03', catId: 'c1', title: 'Go Outside (30 mins)',       points: 2, days: [0,1,2,3,4,5,6] },
-    { id: 't04', catId: 'c2', title: 'Read (30 mins)',             points: 3, days: [0,1,2,3,4,5,6] },
-    { id: 't05', catId: 'c2', title: 'Wood Math (1 page)',         points: 3, days: [0,1,2,3,4,5,6] },
-    { id: 't06', catId: 'c2', title: "Qur'an with Nani (30 mins)", points: 3, days: [0,1,2,3,4,5,6] },
-    { id: 't07', catId: 'c3', title: 'Practice Piano (15 mins)',   points: 2, days: [1,2,3,4,5] },
-    { id: 't08', catId: 'c3', title: 'Noteworks App (15 mins)',    points: 2, days: [2,4] },
-    { id: 't09', catId: 'c4', title: 'Tidy the Basement',         points: 3, days: [0,1,2,3,4,5,6] },
-    { id: 't10', catId: 'c4', title: 'Take a Bath',               points: 3, days: [1,3,5] },
-    { id: 't11', catId: 'c5', title: "Jum'ah (Friday) Prayer",    points: 5, days: [5] },
-    { id: 't12', catId: 'c5', title: "Fajr — 2 Rak'ahs",          points: 2, days: [0,1,2,3,4,5,6] },
-    { id: 't13', catId: 'c5', title: "Dhuhr — 4 Rak'ahs",         points: 2, days: [0,1,2,3,4,5,6] },
-    { id: 't14', catId: 'c5', title: "Asr — 4 Rak'ahs",           points: 2, days: [0,1,2,3,4,5,6] },
-    { id: 't15', catId: 'c5', title: "Maghrib — 3 Rak'ahs",       points: 2, days: [0,1,2,3,4,5,6] },
-    { id: 't16', catId: 'c5', title: "Isha — 4 Rak'ahs",          points: 2, days: [0,1,2,3,4,5,6] },
+    { id: 't01', catId: 'c1', title: 'Make Your Bed',              points: 2, days: [0,1,2,3,4,5,6], kidIds: null },
+    { id: 't02', catId: 'c1', title: 'Help Empty the Dishwasher',  points: 2, days: [0,1,2,3,4,5,6], kidIds: null },
+    { id: 't03', catId: 'c1', title: 'Go Outside (30 mins)',       points: 2, days: [0,1,2,3,4,5,6], kidIds: null },
+    { id: 't04', catId: 'c2', title: 'Read (30 mins)',             points: 3, days: [0,1,2,3,4,5,6], kidIds: null },
+    { id: 't05', catId: 'c2', title: 'Wood Math (1 page)',         points: 3, days: [0,1,2,3,4,5,6], kidIds: null },
+    { id: 't06', catId: 'c2', title: "Qur'an with Nani (30 mins)", points: 3, days: [0,1,2,3,4,5,6], kidIds: null },
+    { id: 't07', catId: 'c3', title: 'Practice Piano (15 mins)',   points: 2, days: [1,2,3,4,5],     kidIds: ['k1'] },
+    { id: 't08', catId: 'c3', title: 'Noteworks App (15 mins)',    points: 2, days: [2,4],           kidIds: ['k1'] },
+    { id: 't09', catId: 'c4', title: 'Tidy the Basement',         points: 3, days: [0,1,2,3,4,5,6], kidIds: null },
+    { id: 't10', catId: 'c4', title: 'Take a Bath',               points: 3, days: [1,3,5],         kidIds: null },
+    { id: 't11', catId: 'c5', title: "Jum'ah (Friday) Prayer",    points: 5, days: [5],             kidIds: null },
+    { id: 't12', catId: 'c5', title: "Fajr — 2 Rak'ahs",          points: 2, days: [0,1,2,3,4,5,6], kidIds: null },
+    { id: 't13', catId: 'c5', title: "Dhuhr — 4 Rak'ahs",         points: 2, days: [0,1,2,3,4,5,6], kidIds: null },
+    { id: 't14', catId: 'c5', title: "Asr — 4 Rak'ahs",           points: 2, days: [0,1,2,3,4,5,6], kidIds: null },
+    { id: 't15', catId: 'c5', title: "Maghrib — 3 Rak'ahs",       points: 2, days: [0,1,2,3,4,5,6], kidIds: null },
+    { id: 't16', catId: 'c5', title: "Isha — 4 Rak'ahs",          points: 2, days: [0,1,2,3,4,5,6], kidIds: null },
   ],
   rewards: [
     { id: 'r1', icon: '📱', title: '+1 Hr iPad Time',      desc: 'Earn extra screen time today!',                    cost: 10,  type: 'daily'  },
@@ -1021,9 +1057,17 @@ async function handlePinKey(key) {
   pinBuffer += key;
   updatePinDots();
   if (pinBuffer.length === 4) {
-    const correctPin = cfg.pin || '1234';
-    if (pinBuffer === correctPin) {
-      PIN = correctPin;
+    const familyPin = cfg.pin || '4320';
+    const parentPin = cfg.parentPin || '1379';
+    if (pinBuffer === parentPin) {
+      // Parent PIN — go directly to parent view
+      PIN = familyPin;
+      pinBuffer = '';
+      updatePinDots();
+      cfg = await getConfig();
+      await openParentDashboard();
+    } else if (pinBuffer === familyPin) {
+      PIN = familyPin;
       pinBuffer = '';
       updatePinDots();
       await renderProfiles();
@@ -1055,7 +1099,9 @@ async function renderProfiles() {
   cfg.kids.forEach((kid, i) => {
     const weekPts = getWeekPoints(ledgers[i], weekStart);
     const card = document.createElement('div');
+    // No pre-selected / active state on profile cards
     card.className = 'profile-card';
+    card.style.cursor = 'pointer';
     card.innerHTML = `
       <div class="profile-avatar">${kid.avatar}</div>
       <div class="profile-name">${kid.name}</div>
@@ -1128,9 +1174,13 @@ document.getElementById('kid-header-avatar').addEventListener('click', () => {
 
 // ─── Today's Task List ───────────────────────────────────────────────────────
 
-function getTodayTasks() {
+function getTodayTasks(kidId) {
   const dow = new Date().getDay();
+  const kid = kidId || activeKidId;
   return cfg.tasks.filter(t => {
+    // Per-kid filter: if kidIds is set, only show for those kids
+    if (t.kidIds && t.kidIds.length > 0 && !t.kidIds.includes(kid)) return false;
+    // Day filter
     if (t.days) return t.days.includes(dow);
     const freq = t.frequency || 'daily';
     if (freq === 'daily') return true;
@@ -1798,6 +1848,41 @@ async function renderParentManage() {
   const container = document.getElementById('parent-manage-content');
   container.innerHTML = '';
 
+  // ── Kids ──
+  const kidsSection = document.createElement('div');
+  kidsSection.className = 'manage-section';
+  kidsSection.innerHTML = '<div class="section-title">Kids</div>';
+  cfg.kids.forEach(kid => {
+    const item = document.createElement('div');
+    item.className = 'manage-item';
+    item.innerHTML = `
+      <div class="manage-item-info">
+        <div class="manage-item-title">${kid.avatar} ${kid.name}</div>
+        <div class="manage-item-sub">Theme: ${kid.theme || 'green'}</div>
+      </div>
+      <button class="manage-edit-btn" data-type="kid" data-id="${kid.id}">Edit</button>
+      <button class="manage-delete-btn" data-type="kid" data-id="${kid.id}">✕</button>
+    `;
+    item.querySelector('[data-type="kid"].manage-edit-btn').addEventListener('click', () => openKidEditModal(kid));
+    item.querySelector('[data-type="kid"].manage-delete-btn').addEventListener('click', async () => {
+      if (cfg.kids.length <= 1) { showToast('⚠️ Must have at least one kid'); return; }
+      if (!confirm(`Remove ${kid.name}? This will not delete their history.`)) return;
+      cfg.kids = cfg.kids.filter(k => k.id !== kid.id);
+      await saveConfig();
+      renderParentKidTabs();
+      activeParentKidId = cfg.kids[0].id;
+      await renderParentManage();
+      showToast(`✅ Removed ${kid.name}`);
+    });
+    kidsSection.appendChild(item);
+  });
+  const addKidBtn = document.createElement('button');
+  addKidBtn.className = 'add-btn';
+  addKidBtn.innerHTML = '+ Add Kid';
+  addKidBtn.addEventListener('click', () => openKidEditModal(null));
+  kidsSection.appendChild(addKidBtn);
+  container.appendChild(kidsSection);
+
   // ── Categories ──
   const catSection = document.createElement('div');
   catSection.className = 'manage-section';
@@ -2001,14 +2086,37 @@ function openManageModal(type, action, item = null) {
         </div>
       </div>
       <div class="form-field">
+        <label class="form-label">Assign to Kids</label>
+        <div class="day-picker" id="mf-kids" style="flex-wrap:wrap">
+          <div class="kid-chip kid-chip-all ${!item?.kidIds || item.kidIds.length === 0 ? 'active' : ''}" data-kid="all">All Kids</div>
+          ${cfg.kids.map(k => `<div class="kid-chip ${item?.kidIds?.includes(k.id) ? 'active' : ''}" data-kid="${k.id}">${k.avatar} ${k.name}</div>`).join('')}
+        </div>
+      </div>
+      <div class="form-field">
         <label class="form-label">Or choose from presets</label>
         <div class="preset-list" id="preset-tasks-list">
           ${PRESET_TASKS.map(p => `<div class="preset-item" data-preset='${JSON.stringify(p)}'><div class="preset-item-title">${p.title}</div><div class="preset-item-sub">${p.catHint} · ${p.points} pts</div></div>`).join('')}
         </div>
       </div>
     `;
+    // Wire up day chips
     body.querySelectorAll('.day-chip').forEach(chip => {
       chip.addEventListener('click', () => chip.classList.toggle('active'));
+    });
+    // Wire up kid chips (mutually exclusive: "All" vs individual)
+    body.querySelectorAll('#mf-kids .kid-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (chip.dataset.kid === 'all') {
+          body.querySelectorAll('#mf-kids .kid-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+        } else {
+          body.querySelector('#mf-kids .kid-chip-all').classList.remove('active');
+          chip.classList.toggle('active');
+          // If none selected, revert to All
+          const anySelected = [...body.querySelectorAll('#mf-kids .kid-chip:not(.kid-chip-all)')].some(c => c.classList.contains('active'));
+          if (!anySelected) body.querySelector('#mf-kids .kid-chip-all').classList.add('active');
+        }
+      });
     });
     body.querySelectorAll('.preset-item').forEach(item => {
       item.addEventListener('click', () => {
@@ -2095,13 +2203,20 @@ document.getElementById('manage-save').addEventListener('click', async () => {
     const title = document.getElementById('mf-title').value.trim();
     const catId = document.getElementById('mf-cat').value;
     const points = parseInt(document.getElementById('mf-pts').value) || 2;
-    const days = [...document.querySelectorAll('.day-chip.active')].map(c => parseInt(c.dataset.day));
+    const days = [...document.querySelectorAll('#mf-days .day-chip.active')].map(c => parseInt(c.dataset.day));
+    // Capture kidIds: null means all kids
+    const allKidsChip = document.querySelector('#mf-kids .kid-chip-all');
+    let kidIds = null;
+    if (allKidsChip && !allKidsChip.classList.contains('active')) {
+      kidIds = [...document.querySelectorAll('#mf-kids .kid-chip:not(.kid-chip-all).active')].map(c => c.dataset.kid);
+      if (kidIds.length === 0) kidIds = null;
+    }
     if (!title) { showToast('⚠️ Task name is required'); return; }
     if (action === 'add') {
-      cfg.tasks.push({ id: `t${Date.now()}`, catId, title, points, days });
+      cfg.tasks.push({ id: `t${Date.now()}`, catId, title, points, days, kidIds });
     } else {
       const t = cfg.tasks.find(t => t.id === item.id);
-      if (t) { t.title = title; t.catId = catId; t.points = points; t.days = days; }
+      if (t) { t.title = title; t.catId = catId; t.points = points; t.days = days; t.kidIds = kidIds; }
     }
   } else if (type === 'reward') {
     const icon = document.getElementById('mf-icon').value.trim();
@@ -2123,6 +2238,109 @@ document.getElementById('manage-save').addEventListener('click', async () => {
   await saveConfig();
   await renderParentManage();
   showToast('✅ Saved!');
+});
+
+// ─── Kid Edit Modal ──────────────────────────────────────────────────────────────────────────────
+
+let pendingKidEdit = null;
+
+function openKidEditModal(kid) {
+  pendingKidEdit = kid;
+  const isNew = !kid;
+  document.getElementById('kid-edit-modal-title').textContent = isNew ? 'Add Kid' : 'Edit Kid';
+  document.getElementById('kef-name').value = kid?.name || '';
+  // Avatar picker
+  const grid = document.getElementById('kef-avatar-grid');
+  grid.innerHTML = '';
+  let selAvatar = kid?.avatar || '👧🏽';
+  AVATARS.forEach(emoji => {
+    const btn = document.createElement('div');
+    btn.className = `avatar-option ${emoji === selAvatar ? 'selected' : ''}`;
+    btn.textContent = emoji;
+    btn.addEventListener('click', () => {
+      grid.querySelectorAll('.avatar-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selAvatar = emoji;
+    });
+    grid.appendChild(btn);
+  });
+  // Theme picker
+  const picker = document.getElementById('kef-theme-picker');
+  picker.innerHTML = '';
+  let selTheme = kid?.theme || 'green';
+  THEMES.forEach(t => {
+    const sw = document.createElement('div');
+    sw.className = `theme-swatch ${t.id === selTheme ? 'active' : ''}`;
+    sw.style.background = t.bg;
+    sw.innerHTML = `<div class="theme-swatch-dot" style="background:${t.dot}"></div>${t.label}`;
+    sw.addEventListener('click', () => {
+      picker.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      selTheme = t.id;
+    });
+    picker.appendChild(sw);
+  });
+
+  document.getElementById('kid-edit-save').onclick = async () => {
+    const name = document.getElementById('kef-name').value.trim();
+    if (!name) { showToast('⚠️ Name is required'); return; }
+    const chosenAvatar = grid.querySelector('.avatar-option.selected')?.textContent || selAvatar;
+    const chosenTheme = picker.querySelector('.theme-swatch.active')?.textContent?.trim();
+    const themeId = THEMES.find(t => t.label === chosenTheme)?.id || selTheme;
+    if (isNew) {
+      cfg.kids.push({ id: `k${Date.now()}`, name, avatar: chosenAvatar, theme: themeId });
+    } else {
+      const k = cfg.kids.find(k => k.id === kid.id);
+      if (k) { k.name = name; k.avatar = chosenAvatar; k.theme = themeId; }
+    }
+    document.getElementById('kid-edit-modal').classList.remove('open');
+    await saveConfig();
+    renderParentKidTabs();
+    await renderParentManage();
+    showToast(isNew ? `✅ Added ${name}!` : `✅ Saved ${name}!`);
+  };
+
+  document.getElementById('kid-edit-cancel').onclick = () => {
+    document.getElementById('kid-edit-modal').classList.remove('open');
+    pendingKidEdit = null;
+  };
+  document.getElementById('kid-edit-modal-close').onclick = () => {
+    document.getElementById('kid-edit-modal').classList.remove('open');
+    pendingKidEdit = null;
+  };
+
+  document.getElementById('kid-edit-modal').classList.add('open');
+}
+
+// ─── Position floating close buttons ────────────────────────────────────────────────────────────────────────
+
+function positionModalCloseBtn(modalId, closeBtnId) {
+  const modal = document.getElementById(modalId);
+  const btn = document.getElementById(closeBtnId);
+  if (!modal || !btn) return;
+  const sheet = modal.querySelector('.modal-sheet');
+  if (!sheet) return;
+  const rect = sheet.getBoundingClientRect();
+  btn.style.top = (rect.top + 14) + 'px';
+  btn.style.right = (window.innerWidth - rect.right + 14) + 'px';
+}
+
+// Re-position close buttons whenever a modal opens
+const _modalPairs = [
+  ['reward-modal', 'reward-modal-close'],
+  ['avatar-modal', 'avatar-modal-close'],
+  ['undo-modal', 'undo-modal-close'],
+  ['manage-modal', 'manage-modal-close'],
+  ['kid-edit-modal', 'kid-edit-modal-close'],
+];
+const _modalObserver = new MutationObserver(() => {
+  _modalPairs.forEach(([mid, cid]) => {
+    const el = document.getElementById(mid);
+    if (el?.classList.contains('open')) positionModalCloseBtn(mid, cid);
+  });
+});
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  _modalObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
 });
 
 async function saveConfig() {
@@ -2184,14 +2402,20 @@ if ('serviceWorker' in navigator) {
     try {
       swReg = await navigator.serviceWorker.register('sw.js');
       setInterval(() => swReg.update(), 60000);
-      navigator.serviceWorker.addEventListener('message', e => {
-        if (e.data && e.data.type === 'SW_UPDATED') {
-          document.getElementById('update-banner').classList.add('show');
-          setTimeout(() => window.location.reload(), 2000);
-        }
-      });
     } catch (err) {
       console.warn('SW registration failed:', err);
+    }
+  });
+
+  // SW message listener
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data?.type === 'SW_UPDATED') {
+      const banner = document.getElementById('update-banner');
+      banner.classList.add('show');
+      setTimeout(() => {
+        banner.classList.remove('show');
+        window.location.reload();
+      }, 2000);
     }
   });
 }

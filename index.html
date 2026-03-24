@@ -914,7 +914,25 @@
 <div id="toast"></div>
 
 <script>
-// ─── App Data (localStorage-backed, Cloudflare-ready) ────────────────────────
+// ─── Cloudflare Worker API ───────────────────────────────────────────────────
+
+const API = 'https://thrivepoint-api.zgauba.workers.dev';
+let PIN = '1234'; // updated after config loads
+
+async function apiFetch(path, options = {}) {
+  const res = await fetch(`${API}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Thrivepoint-Pin': PIN,
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+// ─── App Data ────────────────────────────────────────────────────────────────
 
 const DEFAULT_CONFIG = {
   pin: "1234",
@@ -962,68 +980,63 @@ const DEFAULT_CONFIG = {
   ]
 };
 
-// ─── Storage Helpers ──────────────────────────────────────────────────────────
+// ─── API Helpers ────────────────────────────────────────────────────────────────
 
-function loadConfig() {
-  const raw = localStorage.getItem('ee_config');
-  return raw ? JSON.parse(raw) : DEFAULT_CONFIG;
+// In-memory cache to avoid redundant API calls within a session
+const _cache = { ledgers: {}, today: {}, config: null };
+
+async function getConfig() {
+  if (_cache.config) return _cache.config;
+  try {
+    _cache.config = await apiFetch('/api/config');
+  } catch (e) {
+    _cache.config = DEFAULT_CONFIG;
+  }
+  PIN = _cache.config.pin || '1234';
+  return _cache.config;
 }
 
-function saveConfig(cfg) {
-  localStorage.setItem('ee_config', JSON.stringify(cfg));
+async function getLedger(kidId) {
+  if (_cache.ledgers[kidId]) return _cache.ledgers[kidId];
+  try {
+    _cache.ledgers[kidId] = await apiFetch(`/api/ledger?kidId=${kidId}`);
+  } catch (e) {
+    _cache.ledgers[kidId] = [];
+  }
+  return _cache.ledgers[kidId];
 }
 
-function todayKey() {
-  const d = new Date();
-  return `ee_day_${d.getFullYear()}_${d.getMonth()+1}_${d.getDate()}`;
+async function getToday(kidId) {
+  if (_cache.today[kidId]) return _cache.today[kidId];
+  try {
+    _cache.today[kidId] = await apiFetch(`/api/today?kidId=${kidId}`);
+  } catch (e) {
+    _cache.today[kidId] = { completedTaskIds: [], rewardIds: [] };
+  }
+  return _cache.today[kidId];
 }
 
-function loadCompletions() {
-  const raw = localStorage.getItem(todayKey());
-  return raw ? JSON.parse(raw) : {};
-}
-
-function saveCompletions(data) {
-  localStorage.setItem(todayKey(), JSON.stringify(data));
-}
-
-function loadLedger(kidId) {
-  const raw = localStorage.getItem(`ee_ledger_${kidId}`);
-  return raw ? JSON.parse(raw) : [];
-}
-
-function saveLedger(kidId, ledger) {
-  localStorage.setItem(`ee_ledger_${kidId}`, JSON.stringify(ledger));
-}
-
-function getBalance(kidId) {
-  const ledger = loadLedger(kidId);
+async function getBalance(kidId) {
+  const ledger = await getLedger(kidId);
   return ledger.reduce((sum, e) => sum + e.delta, 0);
 }
 
-function addLedgerEntry(kidId, entry) {
-  const ledger = loadLedger(kidId);
-  ledger.unshift(entry);
-  saveLedger(kidId, ledger.slice(0, 200)); // keep last 200 entries
-}
+// ─── State ────────────────────────────────────────────────────────────────
 
-// ─── State ────────────────────────────────────────────────────────────────────
-
-let cfg = loadConfig();
+let cfg = DEFAULT_CONFIG; // will be replaced by API data on load
 let activeKidId = null;
 let activeParentKidId = null;
 let pendingReward = null;
 let pinBuffer = '';
-const CORRECT_PIN = cfg.pin;
 
-// ─── Routing ──────────────────────────────────────────────────────────────────
+// ─── Routing ────────────────────────────────────────────────────────────────
 
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(`view-${id}`).classList.add('active');
 }
 
-// ─── PIN Screen ───────────────────────────────────────────────────────────────
+// ─── PIN Screen ────────────────────────────────────────────────────────────────
 
 function updatePinDots() {
   for (let i = 0; i < 4; i++) {
@@ -1031,7 +1044,7 @@ function updatePinDots() {
   }
 }
 
-function handlePinKey(key) {
+async function handlePinKey(key) {
   if (key === 'del') {
     pinBuffer = pinBuffer.slice(0, -1);
     updatePinDots();
@@ -1042,10 +1055,13 @@ function handlePinKey(key) {
   pinBuffer += key;
   updatePinDots();
   if (pinBuffer.length === 4) {
-    if (pinBuffer === CORRECT_PIN) {
+    // Validate against config PIN (loaded from API)
+    const correctPin = cfg.pin || '1234';
+    if (pinBuffer === correctPin) {
+      PIN = correctPin;
       pinBuffer = '';
       updatePinDots();
-      renderProfiles();
+      await renderProfiles();
       showView('profiles');
     } else {
       document.getElementById('pin-error').textContent = 'Incorrect PIN. Try again.';
@@ -1059,20 +1075,21 @@ document.querySelectorAll('.pin-key').forEach(btn => {
   btn.addEventListener('click', () => handlePinKey(btn.dataset.key));
 });
 
-// ─── Profile Select ───────────────────────────────────────────────────────────
+// ─── Profile Select ────────────────────────────────────────────────────────────────
 
-function renderProfiles() {
-  cfg = loadConfig();
+async function renderProfiles() {
+  cfg = await getConfig();
   const grid = document.getElementById('profiles-grid');
+  grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">Loading...</div>';
+  const balances = await Promise.all(cfg.kids.map(k => getBalance(k.id)));
   grid.innerHTML = '';
-  cfg.kids.forEach(kid => {
-    const bal = getBalance(kid.id);
+  cfg.kids.forEach((kid, i) => {
     const card = document.createElement('div');
     card.className = 'profile-card';
     card.innerHTML = `
       <div class="profile-avatar">${kid.avatar}</div>
       <div class="profile-name">${kid.name}</div>
-      <div class="profile-points">⭐ ${bal} pts</div>
+      <div class="profile-points">⭐ ${balances[i]} pts</div>
     `;
     card.addEventListener('click', () => openKidDashboard(kid.id));
     grid.appendChild(card);
@@ -1083,10 +1100,14 @@ document.getElementById('btn-parent-mode').addEventListener('click', () => {
   openParentDashboard();
 });
 
-// ─── Kid Dashboard ────────────────────────────────────────────────────────────
+// ─── Kid Dashboard ────────────────────────────────────────────────────────────────
 
-function openKidDashboard(kidId) {
+async function openKidDashboard(kidId) {
   activeKidId = kidId;
+  // Invalidate caches for fresh data on each dashboard open
+  delete _cache.today[kidId];
+  delete _cache.ledgers[kidId];
+
   const kid = cfg.kids.find(k => k.id === kidId);
   const today = new Date();
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -1103,44 +1124,52 @@ function openKidDashboard(kidId) {
   document.querySelector('[data-tab="tasks"]').classList.add('active');
   document.getElementById('panel-tasks').classList.add('active');
 
-  renderTasks();
-  renderRewards();
-  renderLedger();
   showView('kid');
+  await renderTasks();
+  await renderRewards();
+  await renderLedger();
 }
 
-document.getElementById('kid-back').addEventListener('click', () => {
-  renderProfiles();
+document.getElementById('kid-back').addEventListener('click', async () => {
+  await renderProfiles();
   showView('profiles');
 });
 
 // Tab switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', async () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
-    if (btn.dataset.tab === 'rewards') renderRewards();
-    if (btn.dataset.tab === 'ledger') renderLedger();
+    if (btn.dataset.tab === 'rewards') await renderRewards();
+    if (btn.dataset.tab === 'ledger') await renderLedger();
   });
 });
 
 function getTodayTasks() {
-  const dow = new Date().getDay();
-  return cfg.tasks.filter(t => t.days.includes(dow));
+  // Map Worker frequency field to day-of-week filter
+  const dow = new Date().getDay(); // 0=Sun, 5=Fri
+  return cfg.tasks.filter(t => {
+    if (t.days) return t.days.includes(dow); // legacy format
+    const freq = t.frequency || 'daily';
+    if (freq === 'daily') return true;
+    if (freq === 'friday') return dow === 5;
+    if (freq === 'weekend') return dow === 0 || dow === 6;
+    return true;
+  });
 }
 
-function renderTasks() {
-  const completions = loadCompletions();
-  const kidCompletions = completions[activeKidId] || {};
+async function renderTasks() {
+  const todayData = await getToday(activeKidId);
+  const completedIds = todayData.completedTaskIds || [];
   const todayTasks = getTodayTasks();
-  const balance = getBalance(activeKidId);
+  const balance = await getBalance(activeKidId);
 
   document.getElementById('kid-header-pts').textContent = balance;
 
   // Progress
-  const done = todayTasks.filter(t => kidCompletions[t.id] === 'done').length;
+  const done = todayTasks.filter(t => completedIds.includes(t.id)).length;
   const total = todayTasks.length;
   document.getElementById('progress-count').textContent = `${done} / ${total}`;
   document.getElementById('progress-fill').style.width = total ? `${(done/total)*100}%` : '0%';
@@ -1150,10 +1179,11 @@ function renderTasks() {
   list.innerHTML = '';
 
   cfg.categories.forEach(cat => {
-    const catTasks = todayTasks.filter(t => t.catId === cat.id);
+    // Support both catId (legacy) and categoryId (Worker format)
+    const catTasks = todayTasks.filter(t => (t.catId || t.categoryId) === cat.id);
     if (!catTasks.length) return;
 
-    const catDone = catTasks.filter(t => kidCompletions[t.id] === 'done').length;
+    const catDone = catTasks.filter(t => completedIds.includes(t.id)).length;
     const allDone = catDone === catTasks.length;
 
     const section = document.createElement('div');
@@ -1167,9 +1197,9 @@ function renderTasks() {
     `;
 
     catTasks.forEach(task => {
-      const status = kidCompletions[task.id] || 'pending';
+      const isDone = completedIds.includes(task.id);
       const card = document.createElement('div');
-      card.className = `task-card ${status === 'done' ? 'done' : ''}`;
+      card.className = `task-card ${isDone ? 'done' : ''}`;
       card.innerHTML = `
         <div class="task-check"></div>
         <div class="task-info">
@@ -1177,7 +1207,7 @@ function renderTasks() {
         </div>
         <div class="task-points">+${task.points}</div>
       `;
-      card.addEventListener('click', () => toggleTask(task));
+      if (!isDone) card.addEventListener('click', () => toggleTask(task));
       section.appendChild(card);
     });
 
@@ -1185,47 +1215,38 @@ function renderTasks() {
   });
 }
 
-function toggleTask(task) {
-  const completions = loadCompletions();
-  if (!completions[activeKidId]) completions[activeKidId] = {};
-  const current = completions[activeKidId][task.id];
+async function toggleTask(task) {
+  // Optimistic UI update
+  const todayData = _cache.today[activeKidId] || { completedTaskIds: [], rewardIds: [] };
+  todayData.completedTaskIds.push(task.id);
+  _cache.today[activeKidId] = todayData;
 
-  if (current === 'done') {
-    // Undo
-    completions[activeKidId][task.id] = 'pending';
-    saveCompletions(completions);
-    addLedgerEntry(activeKidId, {
-      id: `l${Date.now()}`,
-      type: 'undo',
-      taskId: task.id,
-      title: task.title,
-      delta: -task.points,
-      ts: new Date().toISOString()
+  // Optimistic ledger update
+  if (!_cache.ledgers[activeKidId]) _cache.ledgers[activeKidId] = [];
+  _cache.ledgers[activeKidId].unshift({
+    id: `l${Date.now()}`, type: 'earn', taskId: task.id,
+    title: task.title, delta: task.points, ts: Date.now()
+  });
+
+  showToast(`⭐ +${task.points} pts — ${task.title}`);
+  spawnConfetti();
+  await renderTasks();
+
+  // Persist to API in background
+  try {
+    await apiFetch('/api/complete-task', {
+      method: 'POST',
+      body: JSON.stringify({ kidId: activeKidId, taskId: task.id, taskTitle: task.title, points: task.points })
     });
-    showToast(`↩️ Undid "${task.title}"`);
-  } else {
-    // Complete
-    completions[activeKidId][task.id] = 'done';
-    saveCompletions(completions);
-    addLedgerEntry(activeKidId, {
-      id: `l${Date.now()}`,
-      type: 'earn',
-      taskId: task.id,
-      title: task.title,
-      delta: task.points,
-      ts: new Date().toISOString()
-    });
-    showToast(`⭐ +${task.points} pts — ${task.title}`);
-    spawnConfetti();
+  } catch (e) {
+    showToast('⚠️ Saved locally — will sync when online');
   }
-
-  renderTasks();
 }
 
-// ─── Rewards ──────────────────────────────────────────────────────────────────
+// ─── Rewards ────────────────────────────────────────────────────────────────
 
-function renderRewards() {
-  const balance = getBalance(activeKidId);
+async function renderRewards() {
+  const balance = await getBalance(activeKidId);
   document.getElementById('rewards-balance').textContent = balance;
 
   const list = document.getElementById('rewards-list');
@@ -1266,35 +1287,46 @@ document.getElementById('modal-cancel').addEventListener('click', () => {
   pendingReward = null;
 });
 
-document.getElementById('modal-confirm').addEventListener('click', () => {
+document.getElementById('modal-confirm').addEventListener('click', async () => {
   if (!pendingReward) return;
-  const balance = getBalance(activeKidId);
+  const balance = await getBalance(activeKidId);
   if (balance < pendingReward.cost) {
     showToast('❌ Not enough points!');
     document.getElementById('reward-modal').classList.remove('open');
     return;
   }
-  addLedgerEntry(activeKidId, {
-    id: `l${Date.now()}`,
-    type: 'spend',
-    rewardId: pendingReward.id,
-    title: pendingReward.title,
-    delta: -pendingReward.cost,
-    ts: new Date().toISOString()
+
+  // Optimistic ledger update
+  if (!_cache.ledgers[activeKidId]) _cache.ledgers[activeKidId] = [];
+  _cache.ledgers[activeKidId].unshift({
+    id: `l${Date.now()}`, type: 'spend', rewardId: pendingReward.id,
+    title: pendingReward.title, delta: -pendingReward.cost, ts: Date.now()
   });
-  document.getElementById('reward-modal').classList.remove('open');
-  showToast(`🎉 Redeemed: ${pendingReward.title}!`);
-  spawnConfetti();
-  spawnConfetti();
-  renderRewards();
-  document.getElementById('kid-header-pts').textContent = getBalance(activeKidId);
+
+  const reward = pendingReward;
   pendingReward = null;
+  document.getElementById('reward-modal').classList.remove('open');
+  showToast(`🎉 Redeemed: ${reward.title}!`);
+  spawnConfetti();
+  spawnConfetti();
+  await renderRewards();
+  document.getElementById('kid-header-pts').textContent = await getBalance(activeKidId);
+
+  // Persist to API in background
+  try {
+    await apiFetch('/api/redeem-reward', {
+      method: 'POST',
+      body: JSON.stringify({ kidId: activeKidId, rewardId: reward.id, rewardTitle: reward.title, cost: reward.cost })
+    });
+  } catch (e) {
+    showToast('⚠️ Saved locally — will sync when online');
+  }
 });
 
-// ─── Ledger ───────────────────────────────────────────────────────────────────
+/// ─── Ledger ────────────────────────────────────────────────────────────────
 
-function renderLedger() {
-  const ledger = loadLedger(activeKidId);
+async function renderLedger() {
+  const ledger = await getLedger(activeKidId);
   const list = document.getElementById('ledger-list');
   list.innerHTML = '';
 
@@ -1325,17 +1357,16 @@ function renderLedger() {
   });
 }
 
-// ─── Parent Dashboard ─────────────────────────────────────────────────────────
-
-function openParentDashboard() {
+// ─── Parent Dashboard ────────────────────────────────────────────────────────────────
+async function openParentDashboard() {
   activeParentKidId = cfg.kids[0].id;
   renderParentKidTabs();
-  renderParentContent();
   showView('parent');
+  await renderParentContent();
 }
 
-document.getElementById('parent-back').addEventListener('click', () => {
-  renderProfiles();
+document.getElementById('parent-back').addEventListener('click', async () => {
+  await renderProfiles();
   showView('profiles');
 });
 
@@ -1346,25 +1377,28 @@ function renderParentKidTabs() {
     const btn = document.createElement('button');
     btn.className = `parent-kid-tab ${kid.id === activeParentKidId ? 'active' : ''}`;
     btn.textContent = `${kid.avatar} ${kid.name}`;
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       activeParentKidId = kid.id;
       renderParentKidTabs();
-      renderParentContent();
+      await renderParentContent();
     });
     tabs.appendChild(btn);
   });
 }
 
-function renderParentContent() {
+async function renderParentContent() {
   const kid = cfg.kids.find(k => k.id === activeParentKidId);
-  const balance = getBalance(activeParentKidId);
-  const ledger = loadLedger(activeParentKidId);
+  const [balance, ledger, todayData] = await Promise.all([
+    getBalance(activeParentKidId),
+    getLedger(activeParentKidId),
+    getToday(activeParentKidId)
+  ]);
   const todayTasks = getTodayTasks();
-  const completions = loadCompletions();
-  const kidComp = completions[activeParentKidId] || {};
-  const doneTodayCount = todayTasks.filter(t => kidComp[t.id] === 'done').length;
+  const completedIds = todayData.completedTaskIds || [];
+  const doneTodayCount = todayTasks.filter(t => completedIds.includes(t.id)).length;
+  const todayStr = new Date().toISOString().slice(0, 10);
   const earnedToday = ledger
-    .filter(e => e.type === 'earn' && e.ts.startsWith(new Date().toISOString().slice(0,10)))
+    .filter(e => e.type === 'earn' && new Date(e.ts).toISOString().slice(0,10) === todayStr)
     .reduce((s, e) => s + e.delta, 0);
 
   const content = document.getElementById('parent-content');
@@ -1451,8 +1485,19 @@ function spawnConfetti() {
   }
 }
 
-// ─── Service Worker ───────────────────────────────────────────────────────────
+// ─── App Init ────────────────────────────────────────────────────────────────
 
+// Pre-load config so PIN validation works immediately
+(async () => {
+  try {
+    cfg = await getConfig();
+    PIN = cfg.pin || '1234';
+  } catch (e) {
+    cfg = DEFAULT_CONFIG;
+  }
+})();
+
+// Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});

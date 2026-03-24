@@ -1,7 +1,7 @@
 // ─── Thrivepoint Service Worker ──────────────────────────────────────────────
 // Bump CACHE version on every deploy to trigger the auto-update flow
 
-const CACHE = 'thrivepoint-v5';
+const CACHE = 'thrivepoint-v6';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -10,6 +10,7 @@ const PRECACHE_ASSETS = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
+  '/icons/wordmark.png',
 ];
 
 // ─── Install: precache all assets + skip waiting immediately ─────────────────

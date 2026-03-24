@@ -111,12 +111,28 @@
     .pin-key.empty { visibility: hidden; }
     .pin-error { color: var(--red); font-size: 13px; min-height: 18px; text-align: center; }
 
-    /* ─── Profile Select ────────────────────────────────────── */
+    /* ─── Profile Select ────────────────────────────────────────────────────────────────────────────── */
     #view-profiles {
       align-items: center; justify-content: center;
       gap: 20px; padding: 32px 24px;
       padding-top: calc(var(--safe-top) + 32px);
       overflow-y: auto;
+    }
+    .brand-header {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 10px; margin-bottom: 8px;
+    }
+    .brand-icon {
+      width: 80px; height: 80px; border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(245,158,11,0.25);
+    }
+    .brand-wordmark {
+      width: 220px; height: auto;
+    }
+    .brand-catchphrase {
+      font-size: 13px; font-weight: 500; letter-spacing: 0.08em;
+      color: var(--text-muted); text-transform: uppercase;
+      text-align: center;
     }
     .profiles-title { font-size: 22px; font-weight: 700; text-align: center; }
     .profiles-subtitle { font-size: 14px; color: var(--text-muted); }
@@ -637,16 +653,22 @@
     </div>
   </div>
 
-  <!-- ── Profile Select ─────────────────────────────────────── -->
+  <!-- ── Profile Select ─────────────────────────────────────────────────────── -->
   <div id="view-profiles" class="view">
-    <div class="profiles-title" style="margin-top:8px">Who's checking in? 👋</div>
+    <!-- Branded header -->
+    <div class="brand-header">
+      <img src="icons/apple-touch-icon.png" class="brand-icon" alt="Thrivepoint icon" />
+      <img src="icons/wordmark.png" class="brand-wordmark" alt="Thrivepoint" />
+      <div class="brand-catchphrase">Earn it. Own it. Thrive.</div>
+    </div>
+    <div class="profiles-title">Who's checking in? 👋</div>
     <div class="profiles-subtitle">Tap your name to see your tasks</div>
     <div class="profiles-grid" id="profiles-grid"></div>
     <button class="parent-btn" id="btn-parent-mode">🔐 Parent View</button>
     <button class="parent-btn" id="btn-check-update" style="margin-top:6px;font-size:12px;">🔄 Check for Update</button>
   </div>
 
-  <!-- ── Kid Dashboard ──────────────────────────────────────── -->
+  <!-- ── Kid Dashboard ─────────────────────────────────────────────────────── -->
   <div id="view-kid" class="view">
     <div class="kid-header">
       <button class="back-btn" id="kid-back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>

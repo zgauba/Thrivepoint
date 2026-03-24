@@ -1,7 +1,7 @@
 // ─── Thrivepoint Service Worker ──────────────────────────────────────────────
 // Bump CACHE version on every deploy to trigger the auto-update flow
 
-const CACHE = 'thrivepoint-v3';
+const CACHE = 'thrivepoint-v4';
 
 const PRECACHE_ASSETS = [
   '/',

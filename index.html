@@ -15,12 +15,12 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     /* ─── Theme Definitions ─────────────────────────────────── */
-    /* Default: Deep Green & Amber (Option B) */
+    /* All themes share the same dark background (Gold theme base) */
     :root {
-      --bg:         #0a0f0a;
-      --surface:    #111811;
-      --surface2:   #1a231a;
-      --border:     #2a3a2a;
+      --bg:         #0d1117;
+      --surface:    #161b22;
+      --surface2:   #1e2530;
+      --border:     #2d3748;
       --accent:     #16a34a;
       --accent2:    #4ade80;
       --gold:       #f59e0b;
@@ -34,26 +34,25 @@
       --safe-bot:   env(safe-area-inset-bottom, 0px);
     }
 
+    /* Forest theme — green accents */
+    [data-theme="forest"] {
+      --accent:     #16a34a;
+      --accent2:    #4ade80;
+      --gold:       #f59e0b;
+    }
+
+    /* Gold theme — amber/gold accents */
     [data-theme="gold"] {
-      --bg:         #0d1117;
-      --surface:    #161b22;
-      --surface2:   #1e2530;
-      --border:     #2d3748;
       --accent:     #d97706;
       --accent2:    #f0a500;
       --gold:       #f0a500;
-      --green:      #22c55e;
     }
 
+    /* Navy/Coral theme — orange accents */
     [data-theme="navy"] {
-      --bg:         #0a0e1a;
-      --surface:    #111827;
-      --surface2:   #1a2235;
-      --border:     #2d3a52;
       --accent:     #ea580c;
       --accent2:    #f97316;
       --gold:       #f59e0b;
-      --green:      #22c55e;
     }
 
     html, body {
@@ -571,6 +570,19 @@
     #update-banner.show { display: block; }
     @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 
+    /* ─── Modal Close Button ───────────────────────────────── */
+    .modal-close-btn {
+      position: absolute; top: 14px; right: 14px;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 16px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.15s, color 0.15s;
+      -webkit-tap-highlight-color: transparent; z-index: 10;
+    }
+    .modal-close-btn:hover { background: var(--border); color: var(--text); }
+    .modal-sheet { position: relative; }
+
     /* ─── Notification Badge ────────────────────────────────── */
     .notif-badge {
       display: inline-flex; align-items: center; justify-content: center;
@@ -711,6 +723,7 @@
 <!-- ── Reward Redeem Modal ─────────────────────────────────── -->
 <div class="modal-overlay" id="reward-modal">
   <div class="modal-sheet">
+    <button class="modal-close-btn" id="reward-modal-close">✕</button>
     <div class="modal-handle"></div>
     <div class="modal-title" id="modal-reward-title"></div>
     <div class="modal-desc" id="modal-reward-desc"></div>
@@ -726,6 +739,7 @@
 <!-- ── Avatar Picker Modal ─────────────────────────────────── -->
 <div class="modal-overlay" id="avatar-modal">
   <div class="modal-sheet">
+    <button class="modal-close-btn" id="avatar-modal-close">✕</button>
     <div class="modal-handle"></div>
     <div class="modal-title">Choose Your Avatar</div>
     <div class="modal-desc">Pick an emoji that represents you!</div>
@@ -740,10 +754,10 @@
     </div>
   </div>
 </div>
-
-<!-- ── Undo Task Modal ─────────────────────────────────────── -->
+<!-- ── Undo Task Modal ──────────────────────────────────────── -->
 <div class="modal-overlay" id="undo-modal">
   <div class="modal-sheet">
+    <button class="modal-close-btn" id="undo-modal-close">✕</button>
     <div class="modal-handle"></div>
     <div class="modal-title">Undo Task?</div>
     <div class="modal-desc" id="undo-modal-desc"></div>
@@ -757,6 +771,7 @@
 <!-- ── Manage Item Modal (add/edit category, task, reward) ─── -->
 <div class="modal-overlay" id="manage-modal">
   <div class="modal-sheet" style="max-height:85vh;overflow-y:auto">
+    <button class="modal-close-btn" id="manage-modal-close">✕</button>
     <div class="modal-handle"></div>
     <div class="modal-title" id="manage-modal-title">Add Item</div>
     <div id="manage-modal-body"></div>
@@ -943,7 +958,11 @@ async function getBalance(kidId) {
 
 function getWeekStart(offsetWeeks = 0) {
   const d = new Date();
-  d.setDate(d.getDate() - d.getDay() + offsetWeeks * 7); // Sunday
+  const day = d.getDay(); // 0=Sun, 1=Mon...
+  // Week starts Monday: if today is Sunday (0), go back 6 days; otherwise go back (day-1) days
+  const diff = (day === 0) ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff + offsetWeeks * 7);
+  d.setHours(0, 0, 0, 0);
   return d.toISOString().slice(0, 10);
 }
 
@@ -1313,6 +1332,23 @@ function openRewardModal(reward, balance) {
   document.getElementById('reward-modal').classList.add('open');
 }
 
+// Modal close X buttons
+document.getElementById('reward-modal-close').addEventListener('click', () => {
+  document.getElementById('reward-modal').classList.remove('open');
+  pendingReward = null;
+});
+document.getElementById('avatar-modal-close').addEventListener('click', () => {
+  document.getElementById('avatar-modal').classList.remove('open');
+});
+document.getElementById('undo-modal-close').addEventListener('click', () => {
+  document.getElementById('undo-modal').classList.remove('open');
+  pendingUndoTask = null;
+});
+document.getElementById('manage-modal-close').addEventListener('click', () => {
+  document.getElementById('manage-modal').classList.remove('open');
+  manageModalMode = null;
+});
+
 document.getElementById('modal-cancel').addEventListener('click', () => {
   document.getElementById('reward-modal').classList.remove('open');
   pendingReward = null;
@@ -1597,7 +1633,10 @@ function renderParentTabBar() {
       const tab = btn.dataset.ptab;
       document.getElementById('parent-overview-panel').style.display = tab === 'overview' ? '' : 'none';
       document.getElementById('parent-manage-panel').style.display = tab === 'manage' ? '' : 'none';
-      if (tab === 'manage') await renderParentManage();
+      // Hide kid sub-tabs in Manage view — manage is global, not per-kid
+      document.getElementById('parent-kid-tabs').style.display = tab === 'manage' ? 'none' : '';
+      if (tab === 'overview') await renderParentOverview();
+      else if (tab === 'manage') await renderParentManage();
     });
   });
 }
@@ -1830,6 +1869,67 @@ async function renderParentManage() {
   addRewardBtn.addEventListener('click', () => openManageModal('reward', 'add'));
   rewardSection.appendChild(addRewardBtn);
   container.appendChild(rewardSection);
+
+  // ── Smart Reward Suggestions ──
+  const suggSection = document.createElement('div');
+  suggSection.className = 'manage-section';
+
+  // Calculate max possible points per week based on current tasks
+  const daysInWeek = [1, 2, 3, 4, 5, 6, 0]; // Mon–Sun
+  let weeklyMax = 0;
+  daysInWeek.forEach(day => {
+    cfg.tasks.forEach(t => {
+      const taskDays = t.days || [0,1,2,3,4,5,6];
+      if (taskDays.includes(day)) weeklyMax += (t.points || 0);
+    });
+  });
+
+  // Suggest tiers: ~30%, ~50%, ~70%, ~90% of weekly max
+  const tiers = [
+    { label: 'Easy (30%)',   pct: 0.30, emoji: '🌟', desc: 'Achievable most weeks with moderate effort' },
+    { label: 'Good (50%)',   pct: 0.50, emoji: '🔥', desc: 'Requires consistent daily effort' },
+    { label: 'Great (70%)', pct: 0.70, emoji: '🏆', desc: 'Strong week — almost everything done' },
+    { label: 'Perfect (90%)', pct: 0.90, emoji: '💫', desc: 'Near-perfect week — top-tier reward' },
+  ];
+
+  let suggHTML = `
+    <div class="section-title">💡 Reward Point Suggestions</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">
+      Based on your <strong style="color:var(--text)">${cfg.tasks.length} tasks</strong>, 
+      a perfect week is worth <strong style="color:var(--gold)">${weeklyMax} pts</strong>.
+      Here are suggested point thresholds for weekly rewards:
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+  `;
+  tiers.forEach(t => {
+    const pts = Math.round(weeklyMax * t.pct);
+    suggHTML += `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:20px">${t.emoji}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">${t.label} — <span style="color:var(--gold)">${pts} pts</span></div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${t.desc}</div>
+        </div>
+        <button class="sugg-use-btn" data-pts="${pts}" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--accent2);font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;white-space:nowrap">Use</button>
+      </div>
+    `;
+  });
+  suggHTML += '</div>';
+  suggSection.innerHTML = suggHTML;
+
+  // Wire up "Use" buttons — pre-fill the Add Reward modal with the suggested cost
+  suggSection.querySelectorAll('.sugg-use-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openManageModal('reward', 'add');
+      // After modal opens, pre-fill the cost field
+      setTimeout(() => {
+        const costField = document.getElementById('mf-pts');
+        if (costField) costField.value = btn.dataset.pts;
+      }, 50);
+    });
+  });
+
+  container.appendChild(suggSection);
 
   // Wire up edit/delete buttons
   container.querySelectorAll('.manage-edit-btn').forEach(btn => {
